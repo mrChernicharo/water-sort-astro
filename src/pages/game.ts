@@ -240,8 +240,7 @@ function buildGraph(node: INode, maxIteration = 60_000) {
 }
 
 // console.log(buildGraph(node));
-
-console.log({ node, visited });
+// console.log({ node, visited });
 
 //
 
