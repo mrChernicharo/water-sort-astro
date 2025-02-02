@@ -1,6 +1,6 @@
 self.addEventListener("message", (event) => {
   // Perform some computation or task
-  const result = buildGraphWorker(event.data);
+  const result = main(event.data);
 
   // Send the result back to the main thread
   self.postMessage(result);
@@ -207,17 +207,40 @@ function checkAvailableMoves(map) {
   return availableMoves;
 }
 
-function buildGraphWorker(node, maxIteration = 10_000) {
-  const visited = new Set();
+function calcHeuristic(map) {
+  const tubes = parseMap(map);
 
-  const recurse = (node, maxIteration) => {
-    if (maxIteration < 1) return;
+  let score = 0;
+  for (let i = 0; i < tubes.length; i++) {
+    const tube = tubes[i];
+    const colorCount = uniqueCharacters(tube).replace(/_/g, "").length;
+    const waterCount = tube.replace(/_/g, "").length;
+    // console.log({ tube, colorCount, waterCount });
+    if (isTubeEmpty(tube) || colorCount == 1) {
+      continue;
+    }
+
+    score += colorCount * waterCount;
+  }
+  // console.log({ score });
+  return score;
+}
+
+const MAX_DEPTH = 25;
+
+function dfs(node, maxDepth = MAX_DEPTH) {
+  const visited = new Set();
+  const successfulPaths = [];
+
+  const recurse = (node, maxDepth) => {
+    if (maxDepth < 1) return;
 
     if (visited.has(node.map)) return;
     visited.add(node.map);
 
     if (isGameSuccessful(node.map)) {
-      console.log("SUCCESS!", maxIteration, node);
+      console.log("SUCCESS!", maxDepth, node);
+      successfulPaths.push(node.path);
       return;
     }
 
@@ -227,20 +250,133 @@ function buildGraphWorker(node, maxIteration = 10_000) {
     for (let i = 0; i < moves.length; i++) {
       const move = moves[i];
       const resultMap = getMapAfterMove(node.map, move);
+
       const childNode = {
         map: resultMap,
         children: [],
         path: node.path.concat(`${move.from}-${move.to}`),
-        maxIteration,
+        depth: MAX_DEPTH - maxDepth + 1,
+        h: calcHeuristic(resultMap),
         ...(isGameSuccessful(resultMap) && { success: true }),
       };
 
-      recurse(childNode, maxIteration - 1);
       node.children.push(childNode);
     }
 
-    return node;
+    for (const childNode of node.children) {
+      recurse(childNode, maxDepth - 1);
+    }
+    return { node, successfulPaths };
   };
 
-  return recurse(node, maxIteration);
+  return recurse(node, maxDepth);
 }
+
+function bfs(node, maxDepth = MAX_DEPTH) {
+  const visited = new Set();
+  const queue = [node];
+
+  while (queue.length > 0) {
+    const curr = queue.shift();
+
+    if (maxDepth < 1) break;
+    if (visited.has(curr.map)) continue;
+
+    visited.add(curr.map);
+    const moves = checkAvailableMoves(curr.map);
+
+    const childNodes = [];
+    for (let i = 0; i < moves.length; i++) {
+      const move = moves[i];
+      const resultMap = getMapAfterMove(curr.map, move);
+      const success = isGameSuccessful(resultMap);
+      const path = curr.path.concat(`${move.from}-${move.to}`);
+
+      const childNode = {
+        map: resultMap,
+        path,
+        depth: path.length,
+        h: calcHeuristic(resultMap),
+        ...(success && { success: true }),
+      };
+      // console.log(childNode);
+
+      if (success) {
+        return childNode;
+      }
+      childNodes.push(childNode);
+    }
+
+    childNodes.sort((a, b) => calcHeuristic(a.map) - calcHeuristic(b.map));
+    // childNodes.sort((a, b) => getHeuristic(b.map) - getHeuristic(a.map));
+    // console.log(childNodes);
+
+    for (let i = 0; i < childNodes.length; i++) {
+      queue.push(childNodes[i]);
+    }
+  }
+  return null;
+}
+
+function getBestNextMove(map) {
+  const moves = checkAvailableMoves(map);
+
+  let bestMove;
+  let bestScore = Infinity;
+
+  for (const move of moves) {
+    const newMap = getMapAfterMove(map, move);
+    const hScore = calcHeuristic(newMap);
+    if (hScore < bestScore) {
+      bestScore = hScore;
+      bestMove = move;
+    }
+  }
+
+  return bestMove;
+}
+
+function main(node, maxDepth = MAX_DEPTH) {
+  // dfs(node, maxDepth);
+  // const res = bfs(node, maxDepth);
+  // return res;
+  const bestMove = getBestNextMove(node.map);
+  return bestMove;
+}
+
+// const recurse = (node, maxDepth) => {
+//   if (maxDepth < 1) return;
+
+//   if (visited.has(node.map)) return;
+//   visited.add(node.map);
+
+//   if (isGameSuccessful(node.map)) {
+//     console.log("SUCCESS!", maxDepth, node);
+//     successfulPaths.push(node.path);
+//     return;
+//   }
+
+//   const moves = checkAvailableMoves(node.map);
+//   if (moves.length == 0) return;
+
+//   for (let i = 0; i < moves.length; i++) {
+//     const move = moves[i];
+//     const resultMap = getMapAfterMove(node.map, move);
+
+//     const childNode = {
+//       map: resultMap,
+//       children: [],
+//       path: node.path.concat(`${move.from}-${move.to}`),
+//       depth: MAX_DEPTH - maxDepth + 1,
+//       ...(isGameSuccessful(resultMap) && { success: true }),
+//     };
+
+//     node.children.push(childNode);
+//   }
+
+//   for (const childNode of node.children) {
+//   }
+// };
+
+// return recurse(node, maxDepth);
+// }
