@@ -1,3 +1,5 @@
+const MAX_DEPTH = 50;
+
 type INode = { map: string; children: INode[]; path: string[] };
 type GameMove = { from: number; to: number };
 
@@ -64,17 +66,27 @@ const isGameSuccessful = (map: string) => {
 
 export const isCycling = (path: string[]) => {
   for (let i = path.length; i >= 0; i--) {
-    if (i > 5) break;
+    if (i < path.length - 5) break;
 
     let move = path[i];
-    // let prevMove = path[i - 1] || null;
+    let prevMove = path[i - 1] || null;
     let prevPrevMove = path[i - 2] || null;
+    let prevPrevPrevMove = path[i - 3] || null;
+
+    if (prevMove) {
+      const reversedPrevMove = prevMove[2] + "-" + prevMove[0];
+      if (move === reversedPrevMove) return true;
+    }
 
     if (move === prevPrevMove) {
       return true;
     }
-    return false;
+
+    // if (move === path[i - 4] && prevMove === path[i - 5]) {
+    //   return true;
+    // }
   }
+  return false;
 };
 
 const getTubesByIdx = (map: string, indices: number[]) => {
@@ -231,8 +243,6 @@ export function calcHeuristic2(map: string) {
   return score;
 }
 
-const MAX_DEPTH = 10;
-
 export function dfs(node: INode, maxDepth = MAX_DEPTH) {
   const visited = new Set();
   const successfulPaths: string[][] = [];
@@ -352,54 +362,65 @@ export function getBestNextMove(map: string) {
   //   return { bestMove, resultMap };
 
   const root: N = { map, parent: null, children: [], depth: 0, path: [], score: 0 };
+  let kill = false;
+
+  const search = (node: N) => {
+    if (kill) return node;
+
+    if (node.depth >= MAX_DEPTH) {
+      console.log("maxDepth", node.path);
+      kill = true;
+      return node;
+    }
+    if (isGameSuccessful(node.map)) {
+      console.log("Success", node.path);
+      kill = true;
+      return node;
+    }
+    if (isCycling(node.path)) {
+      //   console.log("isCycling", node.path, node);
+      return node;
+    }
+
+    const moves = checkAvailableMoves(node.map);
+
+    if (moves.length === 0) {
+      console.log("NO SOLUTION");
+      return node;
+    }
+
+    const nodeChildren: N[] = [];
+
+    for (const move of moves) {
+      const parent = node;
+      const path = parent.path.concat(`${move.from}-${move.to}`);
+      const resultMap = getMapAfterMove(parent.map, move);
+      const newNode = {
+        parent,
+        path,
+        children: [],
+        depth: parent.depth + 1,
+        map: resultMap,
+        score: calcHeuristic2(resultMap),
+      };
+      nodeChildren.push(newNode);
+    }
+
+    nodeChildren.sort((a, b) => a.score - b.score);
+
+    for (const child of nodeChildren) {
+      node.children.push(child);
+    }
+
+    for (const ch of node.children) {
+      search(ch);
+    }
+
+    return node;
+  };
 
   return search(root);
 }
-
-const search = (node: N) => {
-  if (node.depth >= MAX_DEPTH) {
-    return node;
-  }
-  if (isGameSuccessful(node.map)) {
-    //   console.log("Success");
-    return node;
-  }
-  if (isCycling(node.path)) {
-    return node;
-  }
-
-  const moves = checkAvailableMoves(node.map);
-
-  const nodeChildren: N[] = [];
-
-  for (const move of moves) {
-    const parent = node;
-    const path = parent.path.concat(`${move.from}-${move.to}`);
-    const resultMap = getMapAfterMove(parent.map, move);
-    const newNode = {
-      parent,
-      path,
-      children: [],
-      depth: parent.depth + 1,
-      map: resultMap,
-      score: calcHeuristic2(resultMap),
-    };
-    nodeChildren.push(newNode);
-  }
-
-  nodeChildren.sort((a, b) => a.score - b.score);
-
-  for (const child of nodeChildren) {
-    node.children.push(child);
-  }
-
-  for (const ch of node.children) {
-    search(ch);
-  }
-
-  //   console.log("NO SOLUTION");
-  return node;
-};
 
 // import type { INode, GameMove } from "../utils/tube-helpers.ts";
 // import { isGameSuccessful } from "../utils/tube-helpers.ts";
@@ -603,14 +624,14 @@ const search = (node: N) => {
 const mapzz = "bbbb gggg cccc pppp mmii iimm ____ ____";
 const map00 = "bbb_ gg__ bgg_";
 let map01 = "bb__ gb__ g___ ggb_";
-const map02 = "bbr_ gb__ g___ ggb_";
+const map02 = "bbr_ gb__ g___ ggb_ rrr_";
 const map03 = "bb__ gb__ g___ ggb_ rr__ rr__";
 const map04 = "bgro gbro bgor robg ____ ____";
 const map05 = "bgro gbro bgor robg ____ ____";
 const map06 = "grbo prbr orpp ccgo bocc bgpg ____ ____";
 const map07 = "iimd mdiw grbo prbw rwwi orpp cogd bccc bgpg domm ____ ____";
 
-console.log(getBestNextMove(map01));
+console.log(getBestNextMove(map03));
 
 // gggg, rrrr, bbbb, oooo, pppp, cccc
 // mm, dd, iiii, wwww
