@@ -62,6 +62,21 @@ const isGameSuccessful = (map: string) => {
   return true;
 };
 
+export const isCycling = (path: string[]) => {
+  for (let i = path.length; i >= 0; i--) {
+    if (i > 5) break;
+
+    let move = path[i];
+    // let prevMove = path[i - 1] || null;
+    let prevPrevMove = path[i - 2] || null;
+
+    if (move === prevPrevMove) {
+      return true;
+    }
+    return false;
+  }
+};
+
 const getTubesByIdx = (map: string, indices: number[]) => {
   const result: Record<number, string> = {};
   for (const index of indices) {
@@ -216,7 +231,7 @@ export function calcHeuristic2(map: string) {
   return score;
 }
 
-const MAX_DEPTH = 25;
+const MAX_DEPTH = 10;
 
 export function dfs(node: INode, maxDepth = MAX_DEPTH) {
   const visited = new Set();
@@ -312,6 +327,14 @@ export function bfs(
   return null;
 }
 
+type N = {
+  map: string;
+  parent: N | null;
+  children: N[];
+  path: string[];
+  depth: number;
+  score: number;
+};
 export function getBestNextMove(map: string) {
   //   const moves = checkAvailableMoves(map);
   //   let bestMove;
@@ -327,7 +350,56 @@ export function getBestNextMove(map: string) {
   //     }
   //   }
   //   return { bestMove, resultMap };
+
+  const root: N = { map, parent: null, children: [], depth: 0, path: [], score: 0 };
+
+  return search(root);
 }
+
+const search = (node: N) => {
+  if (node.depth >= MAX_DEPTH) {
+    return node;
+  }
+  if (isGameSuccessful(node.map)) {
+    //   console.log("Success");
+    return node;
+  }
+  if (isCycling(node.path)) {
+    return node;
+  }
+
+  const moves = checkAvailableMoves(node.map);
+
+  const nodeChildren: N[] = [];
+
+  for (const move of moves) {
+    const parent = node;
+    const path = parent.path.concat(`${move.from}-${move.to}`);
+    const resultMap = getMapAfterMove(parent.map, move);
+    const newNode = {
+      parent,
+      path,
+      children: [],
+      depth: parent.depth + 1,
+      map: resultMap,
+      score: calcHeuristic2(resultMap),
+    };
+    nodeChildren.push(newNode);
+  }
+
+  nodeChildren.sort((a, b) => a.score - b.score);
+
+  for (const child of nodeChildren) {
+    node.children.push(child);
+  }
+
+  for (const ch of node.children) {
+    search(ch);
+  }
+
+  //   console.log("NO SOLUTION");
+  return node;
+};
 
 // import type { INode, GameMove } from "../utils/tube-helpers.ts";
 // import { isGameSuccessful } from "../utils/tube-helpers.ts";
@@ -537,6 +609,8 @@ const map04 = "bgro gbro bgor robg ____ ____";
 const map05 = "bgro gbro bgor robg ____ ____";
 const map06 = "grbo prbr orpp ccgo bocc bgpg ____ ____";
 const map07 = "iimd mdiw grbo prbw rwwi orpp cogd bccc bgpg domm ____ ____";
+
+console.log(getBestNextMove(map01));
 
 // gggg, rrrr, bbbb, oooo, pppp, cccc
 // mm, dd, iiii, wwww
