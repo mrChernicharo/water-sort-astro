@@ -1,21 +1,76 @@
-import { assert, expect, test } from 'vitest';
+import { assert, expect, test, describe } from "vitest";
+import { getMapAfterMove, getSpillCount, performWaterSpill } from "../src/pages/game";
 
 // Edit an assertion and save to see HMR in action
+test("getSpillCount", () => {
+  expect(getSpillCount("gggg", "b___")).toEqual(0);
+  expect(getSpillCount("gggg", "bb__")).toEqual(0);
+  expect(getSpillCount("gggg", "bbb_")).toEqual(0);
+  expect(getSpillCount("gggg", "bbbb")).toEqual(0);
 
-test('Math.sqrt()', () => {
-	expect(Math.sqrt(4)).toBe(2);
-	expect(Math.sqrt(144)).toBe(12);
-	expect(Math.sqrt(2)).toBe(Math.SQRT2);
+  expect(getSpillCount("gggg", "g___")).toEqual(3);
+  expect(getSpillCount("gggg", "bg__")).toEqual(2);
+  expect(getSpillCount("gggg", "bbg_")).toEqual(1);
+  expect(getSpillCount("gggg", "bbrg")).toEqual(0);
+
+  expect(getSpillCount("gggg", "____")).toEqual(4);
+  expect(getSpillCount("ggg_", "____")).toEqual(3);
+  expect(getSpillCount("gg__", "____")).toEqual(2);
+  expect(getSpillCount("g___", "____")).toEqual(1);
+
+  expect(getSpillCount("rggg", "g___")).toEqual(3);
+  expect(getSpillCount("rggg", "rg__")).toEqual(2);
+  expect(getSpillCount("rggg", "rgg_")).toEqual(1);
+  expect(getSpillCount("rggg", "rgrg")).toEqual(0);
+
+  expect(getSpillCount("rggg", "rrrg")).toEqual(0);
+  expect(getSpillCount("rggg", "rrg_")).toEqual(1);
+  expect(getSpillCount("rggg", "rg__")).toEqual(2);
+  expect(getSpillCount("rggg", "g___")).toEqual(3);
+
+  expect(getSpillCount("rrgg", "rrrg")).toEqual(0);
+  expect(getSpillCount("rrgg", "rrg_")).toEqual(1);
+  expect(getSpillCount("rrgg", "rg__")).toEqual(2);
+  expect(getSpillCount("rrgg", "g___")).toEqual(2);
+
+  expect(getSpillCount("rrg_", "rrrg")).toEqual(0);
+  expect(getSpillCount("rrg_", "rrg_")).toEqual(1);
+  expect(getSpillCount("rrg_", "rg__")).toEqual(1);
+  expect(getSpillCount("rrg_", "g___")).toEqual(1);
 });
 
-test('JSON', () => {
-	const input = {
-		foo: 'hello',
-		bar: 'world',
-	};
+test("performWaterSpill", () => {
+  expect(performWaterSpill("ggg_", "g___")).toEqual({ tubeA: "____", tubeB: "gggg" });
+  expect(performWaterSpill("ggg_", "bg__")).toEqual({ tubeA: "g___", tubeB: "bggg" });
 
-	const output = JSON.stringify(input);
+  expect(getSpillCount("bggg", "bbg_")).toEqual(1);
+  expect(performWaterSpill("bggg", "bbg_")).toEqual({ tubeA: "bgg_", tubeB: "bbgg" });
 
-	expect(output).eq('{"foo":"hello","bar":"world"}');
-	assert.deepEqual(JSON.parse(output), input, 'matches original');
+  expect(getSpillCount("ggg_", "bbg_")).toEqual(1);
+  expect(performWaterSpill("ggg_", "bbg_")).toEqual({ tubeA: "gg__", tubeB: "bbgg" });
+
+  expect(getSpillCount("gg__", "bbg_")).toEqual(1);
+  expect(performWaterSpill("gg__", "bbg_")).toEqual({ tubeA: "g___", tubeB: "bbgg" });
+
+  expect(getSpillCount("gg__", "bg__")).toEqual(2);
+  expect(performWaterSpill("gg__", "bg__")).toEqual({ tubeA: "____", tubeB: "bggg" });
+
+  expect(getSpillCount("gg__", "bgg_")).toEqual(1);
+  expect(performWaterSpill("gg__", "bgg_")).toEqual({ tubeA: "g___", tubeB: "bggg" });
+
+  expect(getSpillCount("gg__", "gg__")).toEqual(2);
+  expect(performWaterSpill("gg__", "gg__")).toEqual({ tubeA: "____", tubeB: "gggg" });
+
+  expect(getSpillCount("bgg_", "gg__")).toEqual(2);
+  expect(performWaterSpill("bgg_", "gg__")).toEqual({ tubeA: "b___", tubeB: "gggg" });
+
+  expect(getSpillCount("bgg_", "bgg_")).toEqual(1);
+  expect(performWaterSpill("bgg_", "bgg_")).toEqual({ tubeA: "bg__", tubeB: "bggg" });
+});
+
+test("getMapAfterMove", () => {
+  expect(getMapAfterMove("bbb_ ggb_", { from: 0, to: 1 })).toEqual("bb__ ggbb");
+  expect(getMapAfterMove("bbb_ ggb_", { from: 1, to: 0 })).toEqual("bbbb gg__");
+  expect(getMapAfterMove("____ bbb_ ggb_", { from: 2, to: 1 })).toEqual("____ bbbb gg__");
+  expect(getMapAfterMove("rrrr ____ bbb_ ggb_", { from: 3, to: 2 })).toEqual("rrrr ____ bbbb gg__");
 });
