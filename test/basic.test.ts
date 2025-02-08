@@ -1,5 +1,5 @@
 import { assert, expect, test, describe } from "vitest";
-import { getMapAfterMove, getSpillCount, performWaterSpill } from "../src/pages/game";
+import { areMapsEqual, getDistToGround, getMapAfterMove, getSpillCount, performWaterSpill } from "../src/pages/game";
 
 // Edit an assertion and save to see HMR in action
 test("getSpillCount", () => {
@@ -73,4 +73,29 @@ test("getMapAfterMove", () => {
   expect(getMapAfterMove("bbb_ ggb_", { from: 1, to: 0 })).toEqual("bbbb gg__");
   expect(getMapAfterMove("____ bbb_ ggb_", { from: 2, to: 1 })).toEqual("____ bbbb gg__");
   expect(getMapAfterMove("rrrr ____ bbb_ ggb_", { from: 3, to: 2 })).toEqual("rrrr ____ bbbb gg__");
+});
+
+test("getDistToGround", () => {
+  expect(getDistToGround("gggg")).toEqual(0);
+  expect(getDistToGround("g___")).toEqual(0);
+  expect(getDistToGround("bggg")).toEqual(1);
+  expect(getDistToGround("bg__")).toEqual(1);
+  expect(getDistToGround("bgg_")).toEqual(1);
+  expect(getDistToGround("bbgg")).toEqual(2);
+  expect(getDistToGround("bbbg")).toEqual(3);
+  expect(getDistToGround("bgbg")).toEqual(3);
+  expect(getDistToGround("gbg_")).toEqual(2);
+
+  expect(getDistToGround("gggg")).toEqual(0);
+  expect(getSpillCount("gggg", "____")).toEqual(4);
+});
+
+test("areMapsEqual", () => {
+  expect(areMapsEqual("____ ff__ ff__", "ff__ ____ ff__")).toBeTruthy();
+  expect(areMapsEqual("rrb__ bbbr ffr_ ff__", "bbbr ff__ ffr_ rrb__")).toBeTruthy();
+  expect(areMapsEqual("oo__ rrb__ bbbr ffr_ f___ oof_", "oof_ bbbr f___ oo__ ffr_ rrb__")).toBeTruthy();
+
+  expect(areMapsEqual("ggg_ g___", "gg__ gg__")).toBeFalsy();
+  expect(areMapsEqual("ggg_ g___ rrrr", "rrrr gg__ gg__")).toBeFalsy();
+  expect(areMapsEqual("rrb__ bbr_ ffr_ ffb_", "bbbr ff__ ffr_ rrb__")).toBeFalsy();
 });

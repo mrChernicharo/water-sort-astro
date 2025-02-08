@@ -1,4 +1,4 @@
-const MAX_DEPTH = 50;
+const MAX_DEPTH = 120;
 
 type INode = { map: string; children: INode[]; path: string[] };
 type GameMove = { from: number; to: number };
@@ -238,11 +238,6 @@ export function calcHeuristic(map: string) {
   return score;
 }
 
-export function calcHeuristic2(map: string) {
-  let score = 0;
-  return score;
-}
-
 export function dfs(node: INode, maxDepth = MAX_DEPTH) {
   const visited = new Set();
   const successfulPaths: string[][] = [];
@@ -339,37 +334,86 @@ export function bfs(
 
 type N = {
   map: string;
+  move: GameMove | null;
   parent: N | null;
   children: N[];
   path: string[];
   depth: number;
   score: number;
 };
-export function getBestNextMove(map: string) {
-  //   const moves = checkAvailableMoves(map);
-  //   let bestMove;
-  //   let resultMap;
-  //   let bestScore = Infinity;
-  //   for (const move of moves) {
-  //     const newMap = getMapAfterMove(map, move);
-  //     const hScore = calcHeuristic(newMap);
-  //     if (hScore < bestScore) {
-  //       bestScore = hScore;
-  //       bestMove = move;
-  //       resultMap = newMap;
-  //     }
-  //   }
-  //   return { bestMove, resultMap };
 
-  const root: N = { map, parent: null, children: [], depth: 0, path: [], score: 0 };
+export function getDistToGround(targetTube: string) {
+  let topColor = "";
+
+  for (let i = 3; i >= 0; i--) {
+    const c = targetTube[i];
+    if (!topColor && c != "_") {
+      topColor = c;
+    }
+
+    if (topColor && c != topColor) {
+      return i + 1;
+    }
+  }
+  return 0;
+}
+
+const penalty = {
+  uselessMove: -30,
+};
+const bonus: Record<string, Record<number, number>> = {
+  spillCount: {
+    0: 0,
+    1: 3.5,
+    2: 7,
+    3: 10.5,
+    4: -10,
+  },
+  distToGround: {
+    0: 6,
+    1: 4,
+    2: 2,
+    3: 1,
+  },
+};
+
+export function calcHeuristic2(node: N) {
+  let score = 0;
+
+  if (!node.parent || !node.move) return score;
+
+  const { from, to } = node.move;
+
+  const { [from]: prevTubeA, [to]: prevTubeB } = getTubesByIdx(node.parent.map, [from, to]);
+  const { [from]: afterTubeA, [to]: afterTubeB } = getTubesByIdx(node.map, [from, to]);
+
+  const spillCount = getSpillCount(prevTubeA, prevTubeB);
+  const distToGround = getDistToGround(afterTubeB);
+  console.log({ prevTubeA, prevTubeB, distToGround, spillCount, map: node.map, prevMap: node.parent.map });
+
+  if ((distToGround == 0 && spillCount == 4) || spillCount == 0) {
+    score += penalty.uselessMove;
+  } else {
+    score += bonus.distToGround[distToGround];
+    score += bonus.spillCount[spillCount];
+  }
+
+  for (const t of parseMap(node.map)) {
+    if (isTubeFull(t) || isTubeEmpty(t)) score += 2.25;
+  }
+
+  return score;
+}
+
+export function getBestNextMoveV1(map: string) {
+  const root: N = { map, parent: null, children: [], depth: 0, path: [], score: 0, move: null };
   let kill = false;
 
   const search = (node: N) => {
     if (kill) return node;
 
-    if (node.depth >= MAX_DEPTH) {
-      console.log("maxDepth", node.path);
-      kill = true;
+    if (node.depth > MAX_DEPTH) {
+      //   console.log("maxDepth", node.path);
       return node;
     }
     if (isGameSuccessful(node.map)) {
@@ -381,15 +425,72 @@ export function getBestNextMove(map: string) {
       //   console.log("isCycling", node.path, node);
       return node;
     }
-
     const moves = checkAvailableMoves(node.map);
-
     if (moves.length === 0) {
       console.log("NO SOLUTION");
       return node;
     }
-
     const nodeChildren: N[] = [];
+    for (const move of moves) {
+      const parent = node;
+      const path = parent.path.concat(`${move.from}-${move.to}`);
+      const resultMap = getMapAfterMove(parent.map, move);
+      const newNode = {
+        parent,
+        path,
+        move,
+        children: [],
+        depth: parent.depth + 1,
+        map: resultMap,
+        score: 0,
+      };
+
+      newNode.score = calcHeuristic2(newNode);
+      nodeChildren.push(newNode);
+    }
+    nodeChildren.sort((a, b) => a.score - b.score);
+    for (const child of nodeChildren) {
+      node.children.push(child);
+    }
+    for (const ch of node.children) {
+      search(ch);
+    }
+    return node;
+  };
+  return search(root);
+}
+
+export function getBestNextMoveV2(map: string) {
+  const root: N = { map, parent: null, children: [], depth: 0, path: [], score: 0, move: null };
+
+  const queue: N[] = [root];
+  let node: N;
+  let found = false;
+
+  while (queue.length && !found) {
+    queue.sort((a, b) => b.score - a.score);
+    node = queue.shift() as N;
+
+    if (node.depth > MAX_DEPTH) {
+      console.log("maxDepth", node.path);
+      return node;
+    }
+    if (isGameSuccessful(node.map)) {
+      console.log("Success", node.path);
+      found = true;
+      return node;
+    }
+
+    if (isCycling(node.path)) {
+      //   console.log("isCycling", node.path, node);
+      return node;
+    }
+
+    const moves = checkAvailableMoves(node.map);
+    if (moves.length === 0) {
+      // console.log("NO SOLUTION");
+      return node;
+    }
 
     for (const move of moves) {
       const parent = node;
@@ -398,28 +499,111 @@ export function getBestNextMove(map: string) {
       const newNode = {
         parent,
         path,
+        move,
         children: [],
         depth: parent.depth + 1,
         map: resultMap,
-        score: calcHeuristic2(resultMap),
+        score: 0,
       };
-      nodeChildren.push(newNode);
+
+      newNode.score = calcHeuristic2(newNode);
+      if (newNode.score > 0) queue.push(newNode);
+    }
+  }
+
+  return null;
+
+  // ***************************************************************
+
+  // const search = (node: N) => {
+  //   if (kill) return node;
+
+  //   if (node.depth > MAX_DEPTH) {
+  //     //   console.log("maxDepth", node.path);
+  //     return node;
+  //   }
+  //   if (isGameSuccessful(node.map)) {
+  //     console.log("Success", node.path);
+  //     kill = true;
+  //     return node;
+  //   }
+  //   if (isCycling(node.path)) {
+  //     //   console.log("isCycling", node.path, node);
+  //     return node;
+  //   }
+  //   const moves = checkAvailableMoves(node.map);
+  //   if (moves.length === 0) {
+  //     console.log("NO SOLUTION");
+  //     return node;
+  //   }
+  //   const nodeChildren: N[] = [];
+  //   for (const move of moves) {
+  //     const parent = node;
+  //     const path = parent.path.concat(`${move.from}-${move.to}`);
+  //     const resultMap = getMapAfterMove(parent.map, move);
+  //     const newNode = {
+  //       parent,
+  //       path,
+  //       move,
+  //       children: [],
+  //       depth: parent.depth + 1,
+  //       map: resultMap,
+  //       score: 0,
+  //     };
+
+  //     newNode.score = calcHeuristic2(newNode);
+  //     nodeChildren.push(newNode);
+  //   }
+  //   nodeChildren.sort((a, b) => a.score - b.score);
+  //   for (const child of nodeChildren) {
+  //     node.children.push(child);
+  //   }
+  //   for (const ch of node.children) {
+  //     search(ch);
+  //   }
+  //   return node;
+  // };
+  // return search(root);
+}
+
+export function areMapsEqual(m1: string, m2: string) {
+  const s1 = new Set(parseMap(m1));
+  const s2 = new Set(parseMap(m2));
+  console.log(s1, s2, s1.difference(s2));
+  return s1.difference(s2).size === 0;
+}
+
+type NN = { map: string; depth: number; parent: NN | null };
+export function getBestNextMove(map: string) {
+  const visited: Record<string, number> = {};
+  const queue: NN[] = [{ map, depth: 0, parent: null }];
+
+  while (queue.length) {
+    const curr = queue.shift()!;
+
+    // base case
+    if (isGameSuccessful(curr.map)) {
+      console.log("success", curr);
+      return curr;
     }
 
-    nodeChildren.sort((a, b) => a.score - b.score);
-
-    for (const child of nodeChildren) {
-      node.children.push(child);
+    // skip if visited
+    if (visited[curr.map]) {
+      visited[curr.map]++;
+      continue;
+    } else {
+      visited[curr.map] = 1;
     }
 
-    for (const ch of node.children) {
-      search(ch);
+    const moves = checkAvailableMoves(curr.map);
+    for (const m of moves) {
+      const newMap = getMapAfterMove(curr.map, m);
+      queue.push({ map: newMap, depth: curr.depth + 1, parent: curr });
     }
+  }
 
-    return node;
-  };
-
-  return search(root);
+  console.log("NO SOLUTION");
+  return null;
 }
 
 // import type { INode, GameMove } from "../utils/tube-helpers.ts";
@@ -631,7 +815,7 @@ const map05 = "bgro gbro bgor robg ____ ____";
 const map06 = "grbo prbr orpp ccgo bocc bgpg ____ ____";
 const map07 = "iimd mdiw grbo prbw rwwi orpp cogd bccc bgpg domm ____ ____";
 
-console.log(getBestNextMove(map03));
+console.log(getBestNextMove(map05));
 
 // gggg, rrrr, bbbb, oooo, pppp, cccc
 // mm, dd, iiii, wwww
