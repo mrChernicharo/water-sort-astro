@@ -1,4 +1,4 @@
-const MAX_DEPTH = 120;
+const MAX_DEPTH = 5;
 
 type INode = { map: string; children: INode[]; path: string[] };
 type GameMove = { from: number; to: number };
@@ -361,7 +361,7 @@ export function getDistToGround(targetTube: string) {
 const penalty = {
   uselessMove: -30,
 };
-const bonus: Record<string, Record<number, number>> = {
+const bonus: Record<string, Record<number | string, number>> = {
   spillCount: {
     0: 0,
     1: 3.5,
@@ -375,6 +375,7 @@ const bonus: Record<string, Record<number, number>> = {
     2: 2,
     3: 1,
   },
+  tube: {},
 };
 
 export function calcHeuristic2(node: N) {
@@ -566,25 +567,67 @@ export function getBestNextMoveV2(map: string) {
   // return search(root);
 }
 
-export function areMapsEqual(m1: string, m2: string) {
+function getMapDiff(m1: string, m2: string) {
   const s1 = new Set(parseMap(m1));
   const s2 = new Set(parseMap(m2));
-  console.log(s1, s2, s1.difference(s2));
-  return s1.difference(s2).size === 0;
+  //   console.log(s1, s2, s1.difference(s2));
+  return s1.difference(s2);
 }
 
-type NN = { map: string; depth: number; parent: NN | null };
+export function areMapsEqual(m1: string, m2: string) {
+  return getMapDiff(m1, m2).size == 0;
+}
+
+type NN = { map: string; path: GameMove[]; depth: number; parent: NN | null; score: number };
+
+export function calcHeuristic3(node: NN) {
+  let score = 0;
+
+  if (!node.parent || !node.path) return score;
+
+  const { from, to } = node.path.at(-1)!;
+
+  const { [from]: prevTubeA, [to]: prevTubeB } = getTubesByIdx(node.parent.map, [from, to]);
+  const { [from]: afterTubeA, [to]: afterTubeB } = getTubesByIdx(node.map, [from, to]);
+
+  const spillCount = getSpillCount(prevTubeA, prevTubeB);
+  const distToGround = getDistToGround(afterTubeB);
+  //   console.log({ prevTubeA, prevTubeB, distToGround, spillCount, map: node.map, prevMap: node.parent.map });
+
+  if ((distToGround == 0 && spillCount == 4) || spillCount == 0) {
+    score += penalty.uselessMove;
+  } else if (areMapsEqual(node.map, node.parent.map)) {
+    score += penalty.uselessMove * 2;
+  } else {
+    score += bonus.distToGround[distToGround];
+    score += bonus.spillCount[spillCount];
+
+    for (const t of parseMap(node.map)) {
+      if (isTubeFull(t) || isTubeEmpty(t)) score += 2.25;
+      else if (uniqueCharacters(t).length === 2) score += 1;
+    }
+  }
+
+  return score;
+}
+
 export function getBestNextMove(map: string) {
   const visited: Record<string, number> = {};
-  const queue: NN[] = [{ map, depth: 0, parent: null }];
+  const queue: NN[] = [{ map, depth: 0, parent: null, score: 0, path: [] }];
 
   while (queue.length) {
     const curr = queue.shift()!;
 
     // base case
     if (isGameSuccessful(curr.map)) {
-      console.log("success", curr);
-      return curr;
+      //   console.log("success", curr, "best move: ", curr.path[0]);
+      return curr.path[0];
+    }
+
+    // base case
+    if (curr.depth > MAX_DEPTH) {
+      //   console.log("MAX_DEPTH reached", curr, "best move: ", curr.path[0]);
+      return curr.path[0];
     }
 
     // skip if visited
@@ -596,10 +639,32 @@ export function getBestNextMove(map: string) {
     }
 
     const moves = checkAvailableMoves(curr.map);
-    for (const m of moves) {
-      const newMap = getMapAfterMove(curr.map, m);
-      queue.push({ map: newMap, depth: curr.depth + 1, parent: curr });
+    // skip if no available moves
+    if (moves.length <= 0) {
+      continue;
     }
+
+    const resultMaps: NN[] = [];
+    for (const m of moves) {
+      const child = {
+        map: getMapAfterMove(curr.map, m),
+        depth: curr.depth + 1,
+        parent: curr,
+        score: 0,
+        path: curr.path.concat(m),
+      };
+      // assign score
+      child.score = calcHeuristic3(child);
+      resultMaps.push(child);
+    }
+
+    // const sortedResults = resultMaps.slice().sort((a, b) => b.score - a.score);
+    // for (const res of sortedResults) {}
+    for (const res of resultMaps) {
+      if (res.score > 0) queue.push(res);
+    }
+    queue.sort((a, b) => b.score - a.score);
+    console.log({ curr, resultMaps, queue });
   }
 
   console.log("NO SOLUTION");
@@ -812,10 +877,46 @@ const map02 = "bbr_ gb__ g___ ggb_ rrr_";
 const map03 = "bb__ gb__ g___ ggb_ rr__ rr__";
 const map04 = "bgro gbro bgor robg ____ ____";
 const map05 = "bgro gbro bgor robg ____ ____";
-const map06 = "grbo prbr orpp ccgo bocc bgpg ____ ____";
-const map07 = "iimd mdiw grbo prbw rwwi orpp cogd bccc bgpg domm ____ ____";
+const map06 = "grbo rbr_ or__ ccgo bocc bgg_ ____";
+const map07 = "grbo prbr orpp ccgo bocc bgpg ____ ____";
+const map08 = "gtrr urgu brtu gbgz zubt ztbz ____ ____";
+const map10 = "ewwe gtrr urgu brtu gbgz zubt ztbz ewew ____ ____"; // 10 tubes
+const map11 = "ejew gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp ____ ____";
+const map12 = "ejew gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp yhhh hyyy ____ ____";
+const map13 = "ejew gtra urgu brtx gbgz zubt zthz ywew ppjw xara axux jpjp yhbh hyye ____ ____";
+const map14 = "ejew gtra urgu brtx gbgz zubt zthz ykew fpjw xara axux jpjp yhbh hkye kyfp ffwk ____ ____"; // 18 tubes
+const map15 = "ejew gtra urgu brtx gbgz zubt zthz ykew fpjw xira amux jpjp yhbh hkye kyfp mfwk iixm mfai ____ ____"; // 20 tubes
 
-console.log(getBestNextMove(map05));
+// function runAutoGame() {
+//   let myMap = map15;
+//   console.log("initial map -> ", myMap);
+//   console.log("isMapValid -> ", isMapValid(myMap));
+//   let move = getBestNextMove(myMap);
+
+//   while (move) {
+//     myMap = getMapAfterMove(myMap, move);
+//     // console.log(`${move.from} -> ${move.to} => "${myMap}"`);
+//     move = getBestNextMove(myMap);
+//   }
+// }
+
+// runAutoGame();
+
+// const interval = setInterval(() => {
+//   const move = getBestNextMove(myMap);
+//   if (!move) {
+//     console.log("FUDEEEO");
+//     return clearInterval(interval);
+//   }
+
+//   myMap = getMapAfterMove(myMap, move);
+//   console.log(`${move.from} -> ${move.to} = ${myMap}`);
+
+//   if (isGameSuccessful(myMap)) {
+//     console.log("WIN");
+//     return clearInterval(interval);
+//   }
+// }, 0);
 
 // gggg, rrrr, bbbb, oooo, pppp, cccc
 // mm, dd, iiii, wwww
