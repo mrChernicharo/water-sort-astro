@@ -1,19 +1,121 @@
 ---
-import Welcome from "../components/Welcome.astro";
-import Layout from "../layouts/Layout.astro";
+
 ---
 
-<Layout>
-  <h1>Ok</h1>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Astro</title>
 
-  <button>click here!</button>
+    <style>
+      * {
+      }
 
-  <span>type here</span>
+      body {
+        font-family: "Benton Sans", sans-serif;
+      }
+      #svg-canvas-container {
+        border: 1px solid red;
+      }
+      #svg-canvas {
+        background-color: blanchedalmond;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="svg-canvas-container">
+      <svg id="svg-canvas" width="800" height="400">
+        <!-- <mask id="svgmask1">
+          <polygon id="tube-poli" fill="#ffffff" points="100 100, 100 450, 140 500, 260 500, 300 450, 300 100"
+          ></polygon>
+        </mask>
+        <rect y="100" width="500" height="100" fill="dodgerblue" mask="url(#svgmask1)"></rect>
+        <rect y="200" width="500" height="100" fill="lightgreen" mask="url(#svgmask1)"></rect>
+        <rect y="300" width="500" height="100" fill="orange" mask="url(#svgmask1)"></rect>
+        <rect y="400" width="500" height="100" fill="red" mask="url(#svgmask1)"></rect> -->
+      </svg>
+    </div>
+    <div>
+      <button id="btn01">Click me!</button>
+    </div>
 
-  <textarea name="" id=""></textarea>
+    <div>
+      <textarea></textarea>
+    </div>
 
-  <h3>because you're a fool</h3>
+    <script src="./game.ts"></script>
+    <script>
+      //   let i = 1;
+      let deg = 0;
+      let goingUp = true;
 
-  <script src="./game.ts"></script>
-  <script></script>
-</Layout>
+      const svgCanvas = document.querySelector("#svg-canvas") as HTMLElement;
+      //   const poly = document.querySelector("#tube-poli") as HTMLElement;
+      //   poly.style.transformOrigin = "center center";
+
+      const btn = document.querySelector("#btn01") as HTMLElement;
+      btn.onclick = onBtnClick;
+
+      function degToRad(deg: number) {
+        return deg * (Math.PI / 180);
+      }
+
+      console.log(degToRad(58));
+      console.log(degToRad(115));
+      console.log(degToRad(172));
+      console.log(degToRad(180));
+      console.log(degToRad(360));
+
+      let x = 40,
+        y = 40,
+        width = 50,
+        height = 200,
+        margin = 100;
+      function onBtnClick(e: MouseEvent) {
+        // deg += 1;
+        // poly.style.transform = `rotate(${deg}deg)`;
+
+        const tube = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        tube.classList.add("tube");
+
+        tube.style.transformOrigin = `center center`;
+        tube.style.transformBox = `fill-box`;
+
+        tube.setAttribute("x", String(x));
+        tube.setAttribute("y", String(y));
+        tube.setAttribute("width", String(width));
+        tube.setAttribute("height", String(height));
+        tube.setAttribute("fill", "green");
+
+        tube.dataset["angle"] = "0";
+        tube.onclick = rotateTube;
+
+        svgCanvas.append(tube);
+        x += width + margin;
+      }
+
+      function rotateTube(e: MouseEvent) {
+        const target = e.target as HTMLElement;
+        const tube = target.closest(".tube") as SVGRectElement;
+        let angle = Number(tube.dataset["angle"] ?? 0);
+
+        tube.style.transform = `rotate(${angle}deg)`;
+
+        console.log({
+          tube,
+          angle,
+          sin: Math.sin(degToRad(angle)),
+          cos: Math.cos(degToRad(angle)),
+          relativeHeight: height - Math.abs(height * Math.sin(degToRad(angle))),
+        });
+        angle -= 5;
+
+        tube.dataset["angle"] = String(angle);
+      }
+    </script>
+  </body>
+</html>
