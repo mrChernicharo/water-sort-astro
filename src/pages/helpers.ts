@@ -1,3 +1,7 @@
+export function degToRad(deg: number) {
+  return deg * (Math.PI / 180);
+}
+
 export const spliceString = (str: string, start: number, deleteCount: number, insertText: string) => {
   // Extract the part before the removal
   let before = str.slice(0, start);
