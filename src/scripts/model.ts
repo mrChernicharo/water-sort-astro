@@ -14,7 +14,8 @@ export class GameModel {
   }
 
   getCurrentMap() {
-    return this.history.at(-1);
+    if (this.state != GameState.active) throw Error("should not call getCurrentMap when paused");
+    return this.history.at(-1) ?? "";
   }
 
   gameStart() {

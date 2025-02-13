@@ -10,25 +10,38 @@
     <meta name="generator" content={Astro.generator} />
     <title>Astro</title>
 
-    <style>
+    <style is:global>
       * {
+        box-sizing: border-box;
       }
-
       body {
         font-family: "Benton Sans", sans-serif;
       }
-      #svg-canvas-container {
+      #canvas-container {
         border: 1px solid red;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
       }
       #svg-canvas {
         background-color: blanchedalmond;
         margin: 0;
       }
+      .tube {
+        height: 200px;
+        width: 50px;
+        border: 1px solid black;
+      }
+      .water {
+        height: 50px;
+        width: 50px;
+        border: 1px solid black;
+      }
     </style>
   </head>
   <body>
     <div id="canvas-container">
-      <svg id="svg-canvas" width="800" height="400">
+      <svg id="svg-canvas" width="800" height="100">
         <!-- <mask id="svgmask1">
           <polygon id="tube-poli" fill="#ffffff" points="100 100, 100 450, 140 500, 260 500, 300 450, 300 100"
           ></polygon>

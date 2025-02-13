@@ -14,6 +14,7 @@ export class GameController {
 
   onStartBtnClicked(e: MouseEvent) {
     this.model.gameStart();
+    this.view.drawScene();
     console.log(this.model);
   }
 
