@@ -1,9 +1,9 @@
+import type { GameMove } from "./constants";
 import { uniqueCharacters, spliceString, parseMap, areMapsEqual } from "./helpers";
 
 const MAX_DEPTH = 5;
 
 type INode = { map: string; children: INode[]; path: string[] };
-type GameMove = { from: number; to: number };
 
 const isTubeFull = (tube: string) => {
   return tube.replace(/_/g, "").length === 4;

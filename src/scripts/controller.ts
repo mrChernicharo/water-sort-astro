@@ -9,7 +9,7 @@ export class GameController {
     this.view = view;
 
     this.view.startBtn.onclick = this.onStartBtnClicked.bind(this);
-    this.view.resetBtn.onclick = this.onResetBtnClicked.bind(this);
+    // this.view.resetBtn.onclick = this.onResetBtnClicked.bind(this);
   }
 
   onStartBtnClicked(e: MouseEvent) {
@@ -18,8 +18,9 @@ export class GameController {
     console.log(this.model);
   }
 
-  onResetBtnClicked(e: MouseEvent) {
-    this.model.resetGame();
-    console.log(this.model);
-  }
+  // onResetBtnClicked(e: MouseEvent) {
+  //   this.model.resetGame();
+  //   this.view.drawScene();
+  //   console.log(this.model);
+  // }
 }

@@ -21,16 +21,17 @@
         border: 1px solid red;
         display: flex;
         flex-wrap: wrap;
-        gap: 16px;
-      }
-      #svg-canvas {
-        background-color: blanchedalmond;
-        margin: 0;
+        gap: 32px;
+        padding: 32px;
       }
       .tube {
         height: 200px;
         width: 50px;
         border: 1px solid black;
+
+        &.selected {
+          box-shadow: 0px 0px 14px rgb(31, 152, 192);
+        }
       }
       .water {
         height: 50px;
@@ -40,18 +41,17 @@
     </style>
   </head>
   <body>
-    <div id="canvas-container">
-      <svg id="svg-canvas" width="800" height="100">
-        <!-- <mask id="svgmask1">
-          <polygon id="tube-poli" fill="#ffffff" points="100 100, 100 450, 140 500, 260 500, 300 450, 300 100"
-          ></polygon>
-        </mask>
-        <rect y="100" width="500" height="100" fill="dodgerblue" mask="url(#svgmask1)"></rect>
-        <rect y="200" width="500" height="100" fill="lightgreen" mask="url(#svgmask1)"></rect>
-        <rect y="300" width="500" height="100" fill="orange" mask="url(#svgmask1)"></rect>
-        <rect y="400" width="500" height="100" fill="red" mask="url(#svgmask1)"></rect> -->
-      </svg>
-    </div>
+    <!-- <svg id="svg-canvas" width="800" height="100">
+       <mask id="svgmask1">
+        <polygon id="tube-poli" fill="#ffffff" points="100 100, 100 450, 140 500, 260 500, 300 450, 300 100"
+        ></polygon>
+      </mask>
+      <rect y="100" width="500" height="100" fill="dodgerblue" mask="url(#svgmask1)"></rect>
+      <rect y="200" width="500" height="100" fill="lightgreen" mask="url(#svgmask1)"></rect>
+      <rect y="300" width="500" height="100" fill="orange" mask="url(#svgmask1)"></rect>
+      <rect y="400" width="500" height="100" fill="red" mask="url(#svgmask1)"></rect> 
+    </svg> -->
+    <div id="canvas-container"></div>
     <div>
       <button id="btn01">Game start</button>
       <button id="btn02">Reset</button>

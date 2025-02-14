@@ -28,3 +28,5 @@ export const COLORS = {
 };
 
 export type Color = keyof typeof COLORS;
+
+export type GameMove = { from: number; to: number };
