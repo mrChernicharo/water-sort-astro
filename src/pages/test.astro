@@ -2,79 +2,65 @@
 
 ---
 
-<div class="bottle-container">
-  <div class="bottle">
-    <div class="liquid"></div>
-  </div>
-</div>
-<input type="range" id="rotation-slider" min="-90" max="90" value="0" step="1" />
-<label for="rotation-slider">Rotation Angle</label>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
 
-<style>
-  body {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f0f0f0;
-    margin: 0;
-  }
+    <title>Astro</title>
 
-  .bottle-container {
-    position: relative;
-    width: 100px;
-    height: 200px;
-    perspective: 1000px;
-  }
+    <style is:global>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Benton Sans", sans-serif;
+      }
+      #canvas-container {
+        border: 1px solid red;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 32px;
+        padding: 32px;
+      }
+      .tube {
+        height: 200px;
+        width: 50px;
+        border: 1px solid black;
 
-  .bottle {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    background-color: #e0e0e0;
-    transform-style: preserve-3d;
-  }
+        &.selected {
+          box-shadow: 0px 0px 14px rgb(31, 152, 192);
+        }
+      }
+      .water {
+        height: 50px;
+        width: 50px;
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- <svg id="svg-canvas" width="800" height="100">
+       <mask id="svgmask1">
+        <polygon id="tube-poli" fill="#ffffff" points="100 100, 100 450, 140 500, 260 500, 300 450, 300 100"
+        ></polygon>
+      </mask>
+      <rect y="100" width="500" height="100" fill="dodgerblue" mask="url(#svgmask1)"></rect>
+      <rect y="200" width="500" height="100" fill="lightgreen" mask="url(#svgmask1)"></rect>
+      <rect y="300" width="500" height="100" fill="orange" mask="url(#svgmask1)"></rect>
+      <rect y="400" width="500" height="100" fill="red" mask="url(#svgmask1)"></rect> 
+    </svg> -->
+    <div id="canvas-container"></div>
+    <div>
+      <button id="btn01">Game start</button>
+      <button id="btn02">Reset</button>
+    </div>
 
-  .liquid {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 120, 255, 0.7);
-    transform-origin: bottom;
-  }
+    <div>
+      <textarea></textarea>
+    </div>
 
-  #rotation-slider {
-    margin-top: 20px;
-  }
-</style>
-
-<script>
-  const bottle = document.querySelector(".bottle") as HTMLDivElement;
-  const liquid = document.querySelector(".liquid") as HTMLDivElement;
-  const rotationSlider = document.getElementById("rotation-slider") as HTMLInputElement;
-
-  rotationSlider!.addEventListener("input", (event) => {
-    const angle = +(event.target as HTMLInputElement).value;
-
-    // Rotate the bottle
-    bottle.style.transform = `rotateZ(${angle}deg)`;
-
-    // Calculate the liquid's clip-path based on the angle
-    const radians = (angle * Math.PI) / 180; // Convert degrees to radians
-    const tilt = Math.tan(radians); // Calculate the tilt of the liquid surface
-
-    // Adjust the liquid's clip-path dynamically
-    const clipPath = calculateLiquidClipPath(tilt);
-    liquid.style.clipPath = clipPath;
-  });
-
-  function calculateLiquidClipPath(tilt: number) {
-    // Define the liquid's surface based on the tilt
-    const offset = 50 * tilt;
-    console.log({ offset, tilt });
-    if (tilt > 0) return `polygon(0% ${offset}%, 100% 0%, 100% 100%, 0% 100%)`;
-    else return `polygon(0% 0%, 100% ${-offset}%, 100% 100%, 0% 100%)`;
-  }
-</script>
+    <script src="./main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+---
+import json from "../../data/levels.json";
+
+const path = Astro.url.pathname;
+const levelIdx = Number(path.split("/").at(-2));
+const levelNumber = levelIdx + 1;
+
+const level = json[levelIdx];
+---
+
+<h1>Level {levelNumber}</h1>
+
+<div>
+  {level.board}
+</div>

@@ -1,0 +1,137 @@
+---
+
+---
+
+<hr />
+<div class="bottle-container">
+  <div class="bottle">
+    <div class="liquid"></div>
+  </div>
+</div>
+
+<hr />
+
+<input type="range" id="rotation-slider" min="-90" max="90" value="0" step="1" />
+<label for="rotation-slider">Rotation Angle</label>
+
+<input type="range" id="height-slider" min="0" max="100" value="100" step="1" />
+<label for="height-slider">Liquid Height</label>
+
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+    margin: 0;
+  }
+
+  .bottle-container {
+    position: relative;
+    width: 100px;
+    height: 200px;
+    perspective: 1000px;
+  }
+
+  .bottle {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: #e0e0e0;
+    transform-style: preserve-3d;
+  }
+
+  /* .liquid {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 120, 255, 0.7);
+    transform-origin: bottom;
+  } */
+
+  .liquid {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100%; /* Default height (will be overridden by JavaScript) */
+    background-color: rgba(0, 120, 255, 0.7);
+    transform-origin: bottom;
+  }
+
+  hr {
+    width: 100%;
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid #ccc;
+  }
+
+  #rotation-slider {
+    margin-top: 20px;
+  }
+</style>
+
+<script>
+  const bottle = document.querySelector(".bottle") as HTMLDivElement;
+  const liquid = document.querySelector(".liquid") as HTMLDivElement;
+  const rotationSlider = document.getElementById("rotation-slider") as HTMLInputElement;
+  const heightSlider = document.getElementById("height-slider") as HTMLInputElement;
+
+  // Initialize liquid height
+  let liquidHeight = 100; // Default height (100%)
+  let angle = 0;
+
+  // Event listener for rotation slider
+  rotationSlider!.addEventListener("input", (event) => {
+    angle = +(event.target as HTMLInputElement).value;
+    updateBottle(angle, liquidHeight);
+  });
+
+  // Event listener for height slider
+  heightSlider!.addEventListener("input", (event) => {
+    liquidHeight = +(event.target as HTMLInputElement).value;
+    updateBottle(angle, liquidHeight);
+  });
+
+  function updateBottle(angle: number, height: number) {
+    // Rotate the bottle
+    bottle.style.transform = `rotateZ(${angle}deg)`;
+
+    // Calculate the liquid's clip-path based on the angle and height
+    const radians = (angle * Math.PI) / 180; // Convert degrees to radians
+    const tilt = Math.tan(radians); // Calculate the tilt of the liquid surface
+
+    // Adjust the liquid's clip-path dynamically
+    const clipPath = calculateLiquidClipPath(tilt, height);
+    liquid.style.clipPath = clipPath;
+  }
+
+  function calculateLiquidClipPath(tilt: number, height: number) {
+    // Define the liquid's surface based on the tilt and height
+    const offset = 50 * tilt; // Offset based on tilt
+    const heightScale = height / 100; // Scale the offset by the liquid height
+
+    // Calculate the top edge of the liquid based on the tilt and height
+    const topEdge = 100 - height; // Percentage of the bottle that's empty
+
+    if (tilt > 0) {
+      // When tilted to the right, the left edge is higher
+      return `polygon(
+      0% ${topEdge + offset * heightScale}%,
+      100% ${topEdge - offset * heightScale}%,
+      100% 100%,
+      0% 100%
+    )`;
+    } else {
+      // When tilted to the left, the right edge is higher
+      return `polygon(
+      0% ${topEdge + offset * heightScale}%,
+      100% ${topEdge - offset * heightScale}%,
+      100% 100%,
+      0% 100%
+    )`;
+    }
+  }
+</script>
