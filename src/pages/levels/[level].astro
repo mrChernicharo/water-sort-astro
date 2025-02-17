@@ -5,11 +5,40 @@ const path = Astro.url.pathname;
 const levelIdx = Number(path.split("/").at(-2));
 const levelNumber = levelIdx + 1;
 
-const level = json[levelIdx];
+const levelData = json[levelIdx];
 ---
+
+<style is:global>
+  #board {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 36px;
+    justify-content: center;
+    border: 1px solid red;
+    padding-block: 36px;
+  }
+
+  .tube {
+    position: relative;
+    height: 200px; /* TUBE_HEIGHT */
+    width: 50px; /* TUBE_WIDTH */
+    border: 1px solid black;
+    /* overflow: hidden; */
+  }
+</style>
 
 <h1>Level {levelNumber}</h1>
 
-<div>
-  {level.board}
+<div id="board-info">
+  {levelData.board}
 </div>
+
+<div id="board"></div>
+
+<script>
+  import { Level } from "../../scripts/Tube";
+
+  const map = document.querySelector("#board-info")!.textContent!.trim();
+  const level = new Level(map);
+  console.log(level);
+</script>

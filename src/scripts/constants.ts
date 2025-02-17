@@ -30,3 +30,6 @@ export const COLORS = {
 export type Color = keyof typeof COLORS;
 
 export type GameMove = { from: number; to: number };
+
+export const TUBE_HEIGHT = 200;
+export const TUBE_WIDTH = 50;

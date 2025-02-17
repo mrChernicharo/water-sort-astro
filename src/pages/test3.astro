@@ -1,0 +1,122 @@
+---
+import json from "../data/levels.json";
+
+const path = Astro.url.pathname;
+const levelIdx = Number(path.split("/").at(-2));
+const levelNumber = levelIdx + 1;
+
+const level = json[levelIdx];
+---
+
+<style>
+  .board {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    border: 1px solid red;
+  }
+
+  .tube {
+    position: relative;
+    height: 200px;
+    width: 50px;
+    border: 1px solid black;
+    overflow: hidden;
+  }
+
+  .anchor {
+    position: absolute;
+    height: 5px;
+    width: 5px;
+    background-color: red;
+  }
+  .anchor-left {
+  }
+  .anchor-left-2 {
+    top: 50px;
+  }
+  .anchor-left-3 {
+    top: 100px;
+  }
+  .anchor-left-4 {
+    top: 150px;
+  }
+
+  .anchor-right {
+    position: absolute;
+    right: -5px;
+    height: 5px;
+    width: 5px;
+    background-color: green;
+  }
+
+  .water {
+    height: 5px;
+    width: 600px;
+    /* border: 1px solid black; */
+    translate: -300px 0px;
+  }
+
+  .water-inner {
+    height: 200px;
+    width: 600px;
+    background-color: blue;
+    opacity: 0.25;
+  }
+</style>
+
+<h1>Level {levelNumber}</h1>
+
+<div>
+  {level.board}
+</div>
+
+<div class="board">
+  <div class="tube">
+    <div class="anchor anchor-left">
+      <div class="water">
+        <div class="water-inner"></div>
+      </div>
+    </div>
+    <div class="anchor anchor-left-2">
+      <div class="water">
+        <div class="water-inner"></div>
+      </div>
+    </div>
+    <div class="anchor anchor-left-3">
+      <div class="water">
+        <div class="water-inner"></div>
+      </div>
+    </div>
+    <div class="anchor anchor-left-4">
+      <div class="water">
+        <div class="water-inner"></div>
+      </div>
+    </div>
+    <!-- <div class="anchor-right">
+      <div class="water">
+        <div class="water-inner"></div>
+      </div>
+    </div> -->
+  </div>
+</div>
+
+<label for="rotation-slider">rotation</label>
+<input id="rotation-slider" type="range" value="0" min="-90" max="90" />
+
+<script>
+  const tube = document.querySelector(".tube") as HTMLDivElement;
+  const waters = Array.from(document.querySelectorAll(".water")) as HTMLDivElement[];
+  const slider = document.getElementById("rotation-slider") as HTMLInputElement;
+
+  slider.addEventListener("input", (event) => {
+    const angle = (event.target as HTMLInputElement).valueAsNumber;
+    console.log(angle);
+    tube.style.transform = `rotate(${angle}deg)`;
+
+    waters[0].style.rotate = `${-angle}deg`;
+    waters[1].style.rotate = `${-angle}deg`;
+    waters[2].style.rotate = `${-angle}deg`;
+    waters[3].style.rotate = `${-angle}deg`;
+  });
+</script>
