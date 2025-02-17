@@ -139,13 +139,15 @@ export class Tube {
     }
 
     async pourInto(other: Tube) {
-        // const result = performWaterSpill(this.colorStr, other.colorStr);
         const spillCount = getSpillCount(this.colorStr, other.colorStr);
-        // const { tubeA, tubeB } = result;
 
-        this.drain(spillCount);
-        await other.fill(this.getTopColor()!, spillCount);
+        const result = performWaterSpill(this.colorStr, other.colorStr);
+        const { tubeA, tubeB } = result;
 
+        await Promise.all([
+            this.drain(tubeA, spillCount),
+            other.fill(tubeB, this.getTopColor()!, spillCount),
+        ]);
         // this.colorStr = tubeA;
         // this.liquids = [];
         // for (let i = 3; i >= 0; i--) {
@@ -164,10 +166,8 @@ export class Tube {
         // other.updateLiquids(container);
     }
 
-    async drain(spillCount: number) {
-        const tubeEle = this.element;
+    async drain(resultColorStr: string, spillCount: number) {
         const topLiquid = this.getTopLiquid();
-        // console.log("drain", { topLiquid, tubeEle, tube: this, spillCount });
 
         let liquidIdx = topLiquid.idx;
 
@@ -186,20 +186,20 @@ export class Tube {
             liquid.level = newEmptyLiquid.level;
             liquid.element = newEmptyLiquid.element;
 
-            this.#clearTempElements();
-
             liquidIdx--;
             spillCount--;
         }
-
+        this.colorStr = resultColorStr;
+        this.#clearTempElements();
         // console.log("drain", this);
     }
-    async fill(color: string, spillCount: number) {
+    async fill(resultColorStr: string, color: string, spillCount: number) {
         const topLiquid = this.getTopLiquid();
 
-        // @TODO: debug this...
-        let liquidIdx = topLiquid?.idx ? topLiquid.idx + 1 : 0;
-        console.log("fill", { spillCount, color, liquidIdx, topIdx: topLiquid?.idx });
+        let liquidIdx = 0;
+        if (topLiquid) {
+            liquidIdx = topLiquid.idx + 1;
+        }
 
         while (spillCount > 0) {
             const liquid = this.getLiquidByIdx(liquidIdx);
@@ -219,9 +219,9 @@ export class Tube {
             liquidIdx++;
         }
 
+        this.colorStr = resultColorStr;
         this.#clearTempElements();
-
-        console.log("fill", this);
+        // console.log("fill", this);
     }
 
     #clearTempElements() {
@@ -229,7 +229,7 @@ export class Tube {
         [...this.element.children].forEach((ele) => {
             const height = ele.computedStyleMap().get("height")?.toString();
 
-            if (height == "0%") {
+            if (height && parseInt(height) == 0) {
                 removingEles.push(ele);
             }
         });

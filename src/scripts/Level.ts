@@ -87,7 +87,7 @@ export class Level {
 
         const updatedMap = getMapAfterMove(this.map, { from: tubeA.idx, to: tubeB.idx });
         this.map = updatedMap;
-        this.#updateBoard();
+        // this.#updateBoard();
     }
 
     #onWindowClick(e: MouseEvent) {
