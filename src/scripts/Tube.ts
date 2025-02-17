@@ -1,4 +1,4 @@
-import type { Color } from "./constants";
+import { COLORS, type Color } from "./constants";
 import { parseMap } from "./helpers";
 
 export class Liquid {
@@ -14,10 +14,19 @@ export class Liquid {
   }
 
   #createElement() {
+    const cssColor = COLORS[this.color as Color];
+
     const liquidEle = document.createElement("div");
+
+    liquidEle.classList.add(cssColor);
     liquidEle.classList.add("liquid");
-    liquidEle.style.backgroundColor = this.color;
+    liquidEle.style.backgroundColor = cssColor;
     return liquidEle;
+  }
+
+  setLevel(level: number) {
+    this.level = level;
+    this.element.style.height = `${level}%`;
   }
 }
 
@@ -29,7 +38,7 @@ export class Tube {
   constructor(colors: string, idx: number) {
     this.idx = idx;
 
-    for (let i = 0; i < colors.length; i++) {
+    for (let i = 3; i >= 0; i--) {
       this.liquids.push(new Liquid(colors[i]));
     }
     this.element = this.#createElement();
@@ -60,5 +69,19 @@ export class Level {
 
       return tube;
     });
+
+    setTimeout(() => {
+      this.board[1].liquids[0].setLevel(0);
+      this.board[1].liquids[1].setLevel(0);
+      this.board[1].liquids[2].setLevel(50);
+      this.board[1].liquids[3].setLevel(50);
+    }, 1000);
+
+    setTimeout(() => {
+      this.board[1].liquids[0].setLevel(25);
+      this.board[1].liquids[1].setLevel(25);
+      this.board[1].liquids[2].setLevel(25);
+      this.board[1].liquids[3].setLevel(25);
+    }, 2000);
   }
 }
