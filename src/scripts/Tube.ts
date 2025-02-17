@@ -39,8 +39,7 @@ export class Liquid {
         const prevLevel = this.level;
         this.element.style.height = `${level}%`;
         this.level = level;
-
-        // gsap.fromTo(this.element, { height: `${prevLevel}%` }, { height: `${level}%` });
+        gsap.fromTo(this.element, { height: `${prevLevel}%` }, { height: `${level}%` });
     }
 }
 
@@ -89,7 +88,8 @@ export class Tube {
         return this.liquids.filter((lq) => lq.color != "_")[0];
     }
     getLiquidByIdx(idx: number) {
-        return this.liquids.find((lq) => lq.idx == idx);
+        const liquidIdx = this.liquids.findIndex((lq) => lq.idx == idx);
+        return this.liquids[liquidIdx];
     }
 
     getTopColor() {
@@ -133,12 +133,12 @@ export class Tube {
     }
 
     async pourInto(other: Tube) {
-        const result = performWaterSpill(this.colorStr, other.colorStr);
+        // const result = performWaterSpill(this.colorStr, other.colorStr);
         const spillCount = getSpillCount(this.colorStr, other.colorStr);
-        const { tubeA, tubeB } = result;
+        // const { tubeA, tubeB } = result;
 
-        await this.drain(tubeA, spillCount);
-        other.fill(tubeB, spillCount);
+        await this.drain(spillCount);
+        other.fill(spillCount);
 
         // this.colorStr = tubeA;
         // this.liquids = [];
@@ -158,15 +158,15 @@ export class Tube {
         // other.updateLiquids(container);
     }
 
-    async drain(newColorStr: string, spillCount: number) {
+    async drain(spillCount: number) {
         const tubeEle = this.element;
         const topLiquid = this.getTopLiquid();
-        console.log("drain", { topLiquid, tubeEle, tube: this });
+        console.log("drain", { topLiquid, tubeEle, tube: this, spillCount });
 
         let liquidIdx = topLiquid.idx;
 
         while (spillCount > 0) {
-            const liquid = this.getLiquidByIdx(liquidIdx);
+            let liquid = this.getLiquidByIdx(liquidIdx);
             if (!liquid) throw Error("no liquid found");
 
             const newEmpty = new Liquid("_", liquidIdx, 0);
@@ -177,14 +177,22 @@ export class Tube {
                 newEle: newEmpty.element,
             });
 
-            gsap.to(newEmpty.element, { height: `25%` });
-            gsap.to(liquid.element, { height: 0 });
+            newEmpty.setLevel(25);
+            liquid.setLevel(0);
+
+            await wait(500);
+
+            liquid.color = newEmpty.color;
+            liquid.element = newEmpty.element;
+            liquid.level = newEmpty.level;
 
             liquidIdx--;
             spillCount--;
         }
+
+        console.log("drain", this);
     }
-    async fill(newColorStr: string, spillCount: number) {
+    async fill(spillCount: number) {
         const tubeEle = this.element;
         const topLiquid = this.getTopLiquid();
 

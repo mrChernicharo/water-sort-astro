@@ -1,26 +1,35 @@
 import { parseMap, wait } from "./helpers";
-import { getSpillCount } from "./old/old";
+import { getMapAfterMove, getSpillCount } from "./old/old";
 import { Tube } from "./Tube";
 
 export class Level {
-    board: Tube[];
+    map: string;
+    board!: Tube[];
     selectedTubeIdx: number | null;
     element: HTMLDivElement;
 
     constructor(map: string) {
+        this.map = map;
+
         this.selectedTubeIdx = null;
 
         this.element = document.querySelector("#board") as HTMLDivElement;
 
-        this.board = parseMap(map).map((colors, i) => {
+        this.#updateBoard();
+
+        window.addEventListener("click", this.#onWindowClick.bind(this));
+    }
+
+    #updateBoard() {
+        this.element.innerHTML = "";
+
+        this.board = parseMap(this.map).map((colors, i) => {
             const tube = new Tube(colors, i);
 
             this.element.append(tube.element);
 
             return tube;
         });
-
-        window.addEventListener("click", this.#onWindowClick.bind(this));
     }
 
     getTubeByIdx(idx: number) {
@@ -64,7 +73,7 @@ export class Level {
         // // expand A remainingLiquids
         // remainingLiquids.forEach((liquid) => liquid.setLevel(100 / expandCount));
 
-        tubeA.pourInto(tubeB);
+        await tubeA.pourInto(tubeB);
         // await wait(1000);
 
         // update A.liquids
@@ -75,6 +84,10 @@ export class Level {
 
         // reset A levels
         // tubeA.liquids.forEach((liquid) => liquid.setLevel(25));
+
+        const updatedMap = getMapAfterMove(this.map, { from: tubeA.idx, to: tubeB.idx });
+        this.map = updatedMap;
+        this.#updateBoard();
     }
 
     #onWindowClick(e: MouseEvent) {
