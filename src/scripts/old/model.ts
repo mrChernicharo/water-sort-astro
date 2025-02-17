@@ -1,6 +1,6 @@
-import type { GameMove } from "../pages/constants";
-import { parseMap, uniqueCharacters, spliceString } from "../pages/helpers";
-import { getSpillCount, performWaterSpill } from "../pages/old";
+import type { GameMove } from "../constants";
+import { parseMap, uniqueCharacters, spliceString } from "../helpers";
+import { getSpillCount, performWaterSpill } from "./old";
 
 export class GameModel {
   #initialMap: string;

@@ -1,6 +1,6 @@
-import { GameController } from "../scripts/controller";
-import { GameModel } from "../scripts/model";
-import { GameView } from "../scripts/view";
+import { GameController } from "./controller";
+import { GameModel } from "./model";
+import { GameView } from "./view";
 
 function main() {
   let map = "bbrr rgrg ggbb ____ ____";

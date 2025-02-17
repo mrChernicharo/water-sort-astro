@@ -1,6 +1,6 @@
 import { assert, expect, test, describe } from "vitest";
 import { getDistToGround, getMapAfterMove, getSpillCount, performWaterSpill } from "../src/pages/old";
-import { areMapsEqual } from "../src/pages/helpers";
+import { areMapsEqual } from "../src/scripts/helpers";
 
 // Edit an assertion and save to see HMR in action
 test("getSpillCount", () => {

@@ -1,5 +1,5 @@
-import type { GameMove } from "./constants";
-import { uniqueCharacters, spliceString, parseMap, areMapsEqual } from "./helpers";
+import type { GameMove } from "../constants";
+import { uniqueCharacters, spliceString, parseMap, areMapsEqual } from "../helpers";
 
 const MAX_DEPTH = 5;
 

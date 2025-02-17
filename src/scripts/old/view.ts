@@ -1,5 +1,5 @@
-import { COLORS, type Color } from "../pages/constants";
-import { parseMap } from "../pages/helpers";
+import { COLORS, type Color } from "../constants";
+import { parseMap } from "../helpers";
 import type { GameModel } from "./model";
 
 export class GameView {
