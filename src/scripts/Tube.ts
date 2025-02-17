@@ -3,6 +3,8 @@ import { COLORS, type Color } from "./constants";
 import { parseMap, wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
 
+const duration = 3;
+
 export class Liquid {
     color: string;
     idx: number;
@@ -40,11 +42,13 @@ export class Liquid {
             const prevLevel = this.level;
             this.element.style.height = `${level}%`;
             this.level = level;
-            gsap.fromTo(this.element, { height: `${prevLevel}%` }, { height: `${level}%` }).then(
-                () => {
-                    resolve(true);
-                }
-            );
+            gsap.fromTo(
+                this.element,
+                { height: `${prevLevel}%` },
+                { height: `${level}%`, duration }
+            ).then(() => {
+                resolve(true);
+            });
         });
     }
 }
@@ -54,6 +58,7 @@ export class Tube {
     colorStr: string;
     liquids: Liquid[] = [];
     element: HTMLDivElement;
+    topAnchor!: HTMLDivElement;
 
     constructor(colorStr: string, idx: number) {
         this.idx = idx;
@@ -72,6 +77,12 @@ export class Tube {
         tubeEle.classList.add(`tube-${this.idx}`);
 
         tubeEle.dataset.idx = String(this.idx);
+
+        const topAnchorEle = document.createElement("div");
+        topAnchorEle.classList.add("top-anchor");
+        topAnchorEle.classList.add(`top-anchor-${this.idx}`);
+
+        tubeEle.append(topAnchorEle);
 
         this.liquids.forEach((liquid) => {
             tubeEle.append(liquid.element);
@@ -137,6 +148,10 @@ export class Tube {
         return result;
     }
 
+    rotateTo(angle: number) {
+        gsap.to(this.element, { rotate: `${angle}deg`, duration });
+    }
+
     async pourInto(other: Tube) {
         const spillCount = getSpillCount(this.colorStr, other.colorStr);
 
@@ -146,6 +161,8 @@ export class Tube {
         await Promise.all([this.drain(tubeA, spillCount), other.fill(tubeB, spillCount)]);
     }
     async drain(resultColorStr: string, spillCount: number) {
+        this.rotateTo(20);
+
         const topLiquid = this.getTopLiquid();
 
         let liquidIdx = topLiquid.idx;
@@ -168,6 +185,8 @@ export class Tube {
             liquidIdx--;
             spillCount--;
         }
+
+        this.rotateTo(0);
         this.colorStr = resultColorStr;
         this.#clearTemporaryElements();
         // console.log("drain", this);

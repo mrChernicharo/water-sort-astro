@@ -80,11 +80,12 @@ export class Level {
             (el) => (el as HTMLElement).id === "go-back-in-time-btn"
         ) as HTMLButtonElement;
 
+        // console.log(composedPath, clickedTube, clickedGoBackInTimeBtn);
+
         if (clickedGoBackInTimeBtn) {
             this.goBackInTime();
         }
 
-        // console.log(composedPath, clickedTube);
         if (clickedTube) {
             const tubeIdx = Number(clickedTube.dataset.idx);
             const tube = this.getTubeByIdx(tubeIdx);
