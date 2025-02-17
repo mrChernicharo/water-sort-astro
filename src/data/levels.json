@@ -1,18 +1,22 @@
 [
-  {
-    "name": "Level 1",
-    "board": "bb__ gb__ g___ ggb_"
-  },
-  {
-    "name": "Level 2",
-    "board": "bb__ gb__ g___ ggb_ rr__ rr__"
-  },
-  {
-    "name": "Level 3",
-    "board": "ewwe gtrr urgu brtu gbgz zubt ztbz ewew ____ ____"
-  },
-  {
-    "name": "Level 4",
-    "board": "ejew gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp ____ ____"
-  }
+    {
+        "name": "Level 0",
+        "board": "bgg_ brr_ gb__ rr__ g___ b___"
+    },
+    {
+        "name": "Level 1",
+        "board": "bb__ gb__ g___ ggb_"
+    },
+    {
+        "name": "Level 2",
+        "board": "bb__ gb__ g___ ggb_ rr__ rr__"
+    },
+    {
+        "name": "Level 3",
+        "board": "ewwe gtrr urgu brtu gbgz zubt ztbz ewew ____ ____"
+    },
+    {
+        "name": "Level 4",
+        "board": "ejew gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp ____ ____"
+    }
 ]

@@ -1,5 +1,6 @@
 import { COLORS, type Color } from "./constants";
 import { parseMap } from "./helpers";
+import { getSpillCount } from "./old/old";
 
 export class Liquid {
     color: string;
@@ -39,14 +40,18 @@ export class Liquid {
 
 export class Tube {
     idx: number;
+    colorStr: string;
     liquids: Liquid[] = [];
     element: HTMLDivElement;
 
-    constructor(colors: string, idx: number) {
+    constructor(colorStr: string, idx: number) {
         this.idx = idx;
 
+        this.colorStr = colorStr;
+
+        // for (let i = 0; i < 4; i++) {
         for (let i = 3; i >= 0; i--) {
-            this.liquids.push(new Liquid(colors[i], i));
+            this.liquids.push(new Liquid(colorStr[i], i));
         }
         this.element = this.#createElement();
     }
@@ -73,7 +78,17 @@ export class Tube {
     }
 
     getTopColor() {
-        return this.liquids.filter((lq) => lq.color != "_")[0]?.color || null;
+        let topColor = null;
+        for (let i = 0; i < 4; i++) {
+            const color = this.liquids[i].color;
+            if (color == "_") continue;
+            else {
+                topColor = color;
+                break;
+            }
+        }
+        // return this.liquids.filter((lq) => lq.color != "_").at(-1)?.color || null;
+        return topColor;
     }
 
     isComplete() {
@@ -110,14 +125,27 @@ export class Level {
     canPour(tubeA: Tube, tubeB: Tube) {
         const fromColor = tubeA.getTopColor();
         const toColor = tubeB.getTopColor();
-        // console.log("canPour", { fromColor, toColor });
+        console.log("canPour", { tubeA, fromColor, tubeB, toColor });
         if (fromColor == null) return false;
         if (fromColor && toColor == null) return true;
         else return fromColor == toColor && !tubeB.isComplete();
     }
 
     pour(tubeA: Tube, tubeB: Tube) {
-        console.log("Pour!", { tubeA, tubeB });
+        const spillCount = getSpillCount(tubeA.colorStr, tubeB.colorStr);
+
+        console.log("Pour!", { tubeA, tubeB, spillCount });
+
+        // translate tubeA until it stays on top of tubeB
+
+        // rotate A inwards
+        // shrink A top
+        // expand A rest
+
+        // update A.liquids
+
+        // rotate backwards
+        // reset A levels
     }
 
     #onWindowClick(e: MouseEvent) {
