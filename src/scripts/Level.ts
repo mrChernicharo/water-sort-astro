@@ -12,20 +12,24 @@ export class Level {
     constructor(map: string) {
         this.map = map;
         this.history = [map];
-
+        this.element = document.querySelector("#board") as HTMLDivElement;
         this.selectedTubeIdx = null;
 
-        this.element = document.querySelector("#board") as HTMLDivElement;
+        this.#setBoard(map);
 
-        this.board = parseMap(this.map).map((colors, i) => {
+        window.addEventListener("click", this.#onWindowClick.bind(this));
+    }
+
+    #setBoard(map: string) {
+        this.element.innerHTML = "";
+
+        this.board = parseMap(map).map((colors, i) => {
             const tube = new Tube(colors, i);
 
             this.element.append(tube.element);
 
             return tube;
         });
-
-        window.addEventListener("click", this.#onWindowClick.bind(this));
     }
 
     getTubeByIdx(idx: number) {
@@ -42,8 +46,7 @@ export class Level {
     }
 
     async pour(tubeA: Tube, tubeB: Tube) {
-        const spillCount = getSpillCount(tubeA.colorStr, tubeB.colorStr);
-
+        // const spillCount = getSpillCount(tubeA.colorStr, tubeB.colorStr);
         // const { pouringLiquids, emptySpaces, remainingLiquids } =
         //     tubeA.parsePouringLiquids(spillCount);
         // console.log({ pouringLiquids, emptySpaces, remainingLiquids });
@@ -56,11 +59,31 @@ export class Level {
         console.log(this);
     }
 
+    goBackInTime() {
+        if (this.history.length <= 1) return;
+
+        this.history.pop();
+        this.map = this.history.at(-1)!;
+
+        this.#setBoard(this.map);
+        console.log(this);
+    }
+
     #onWindowClick(e: MouseEvent) {
         const composedPath = e.composedPath();
+
         const clickedTube = composedPath.find((el) =>
             (el as HTMLElement)?.classList?.contains("tube")
         ) as HTMLDivElement;
+
+        const clickedGoBackInTimeBtn = composedPath.find(
+            (el) => (el as HTMLElement).id === "go-back-in-time-btn"
+        ) as HTMLButtonElement;
+
+        if (clickedGoBackInTimeBtn) {
+            this.goBackInTime();
+        }
+
         // console.log(composedPath, clickedTube);
         if (clickedTube) {
             const tubeIdx = Number(clickedTube.dataset.idx);
@@ -90,12 +113,10 @@ export class Level {
             }
         }
 
-        if (!clickedTube) {
-            if (this.selectedTubeIdx != null) {
-                const tube = this.getTubeByIdx(this.selectedTubeIdx);
-                this.selectedTubeIdx = null;
-                tube.deselect();
-            }
+        if (!clickedTube && this.selectedTubeIdx != null) {
+            const tube = this.getTubeByIdx(this.selectedTubeIdx);
+            this.selectedTubeIdx = null;
+            tube.deselect();
         }
     }
 }
