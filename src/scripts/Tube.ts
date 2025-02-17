@@ -35,11 +35,17 @@ export class Liquid {
         return liquidEle;
     }
 
-    setLevel(level: number) {
-        const prevLevel = this.level;
-        this.element.style.height = `${level}%`;
-        this.level = level;
-        gsap.fromTo(this.element, { height: `${prevLevel}%` }, { height: `${level}%` });
+    async setLevel(level: number) {
+        return new Promise((resolve) => {
+            const prevLevel = this.level;
+            this.element.style.height = `${level}%`;
+            this.level = level;
+            gsap.fromTo(this.element, { height: `${prevLevel}%` }, { height: `${level}%` }).then(
+                () => {
+                    resolve(true);
+                }
+            );
+        });
     }
 }
 
@@ -137,8 +143,8 @@ export class Tube {
         const spillCount = getSpillCount(this.colorStr, other.colorStr);
         // const { tubeA, tubeB } = result;
 
-        await this.drain(spillCount);
-        other.fill(spillCount);
+        this.drain(spillCount);
+        await other.fill(this.getTopColor()!, spillCount);
 
         // this.colorStr = tubeA;
         // this.liquids = [];
@@ -161,7 +167,7 @@ export class Tube {
     async drain(spillCount: number) {
         const tubeEle = this.element;
         const topLiquid = this.getTopLiquid();
-        console.log("drain", { topLiquid, tubeEle, tube: this, spillCount });
+        // console.log("drain", { topLiquid, tubeEle, tube: this, spillCount });
 
         let liquidIdx = topLiquid.idx;
 
@@ -169,41 +175,65 @@ export class Tube {
             let liquid = this.getLiquidByIdx(liquidIdx);
             if (!liquid) throw Error("no liquid found");
 
-            const newEmpty = new Liquid("_", liquidIdx, 0);
+            const newEmptyLiquid = new Liquid("_", liquidIdx, 0);
 
-            liquid.element.insertAdjacentElement("beforebegin", newEmpty.element);
+            liquid.element.insertAdjacentElement("beforebegin", newEmptyLiquid.element);
 
-            console.log({
-                newEle: newEmpty.element,
-            });
+            newEmptyLiquid.setLevel(25);
+            await liquid.setLevel(0);
 
-            newEmpty.setLevel(25);
-            liquid.setLevel(0);
+            liquid.color = newEmptyLiquid.color;
+            liquid.level = newEmptyLiquid.level;
+            liquid.element = newEmptyLiquid.element;
 
-            await wait(500);
-
-            liquid.color = newEmpty.color;
-            liquid.element = newEmpty.element;
-            liquid.level = newEmpty.level;
+            this.#clearTempElements();
 
             liquidIdx--;
             spillCount--;
         }
 
-        console.log("drain", this);
+        // console.log("drain", this);
     }
-    async fill(spillCount: number) {
-        const tubeEle = this.element;
+    async fill(color: string, spillCount: number) {
         const topLiquid = this.getTopLiquid();
 
-        // console.log("fill", {
-        //     topLiquid,
-        //     tubeEle,
-        //     // spillCount,
-        //     // prevColorsStr: this.colorStr,
-        //     // newColorStr,
-        //     tube: this,
-        // });
+        // @TODO: debug this...
+        let liquidIdx = topLiquid?.idx ? topLiquid.idx + 1 : 0;
+        console.log("fill", { spillCount, color, liquidIdx, topIdx: topLiquid?.idx });
+
+        while (spillCount > 0) {
+            const liquid = this.getLiquidByIdx(liquidIdx);
+
+            const fillLiquid = new Liquid(color, liquidIdx, 0);
+
+            liquid.element.insertAdjacentElement("afterend", fillLiquid.element);
+
+            fillLiquid.setLevel(25);
+            await liquid.setLevel(0);
+
+            liquid.color = fillLiquid.color;
+            liquid.level = fillLiquid.level;
+            liquid.element = fillLiquid.element;
+
+            spillCount--;
+            liquidIdx++;
+        }
+
+        this.#clearTempElements();
+
+        console.log("fill", this);
+    }
+
+    #clearTempElements() {
+        const removingEles: Element[] = [];
+        [...this.element.children].forEach((ele) => {
+            const height = ele.computedStyleMap().get("height")?.toString();
+
+            if (height == "0%") {
+                removingEles.push(ele);
+            }
+        });
+        removingEles.forEach((ele) => ele.remove());
     }
 
     // updateLiquids(container: HTMLDivElement, nextLevel?: number) {
