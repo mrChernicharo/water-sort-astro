@@ -42,27 +42,29 @@ export class Level {
         const { pouringLiquids, emptySpaces, remainingLiquids } =
             tubeA.parsePouringLiquids(spillCount);
 
+        console.log({ pouringLiquids, emptySpaces, remainingLiquids });
+
         // translate tubeA until it stays on top of tubeB
         // rotate A inwards
 
-        let expandCount = 4 - emptySpaces.length;
-        // shrink A emptySpaces
-        emptySpaces.forEach((emptyLiq) => emptyLiq.setLevel(0));
+        // let expandCount = 4 - emptySpaces.length;
+        // // shrink A emptySpaces
+        // emptySpaces.forEach((emptyLiq) => emptyLiq.setLevel(0));
 
-        // expand A pouringLiquids + remainingLiquids
-        [...pouringLiquids, ...remainingLiquids].forEach((liquid) =>
-            liquid.setLevel(100 / expandCount)
-        );
+        // // expand A pouringLiquids + remainingLiquids
+        // [...pouringLiquids, ...remainingLiquids].forEach((liquid) =>
+        //     liquid.setLevel(100 / expandCount)
+        // );
 
-        await wait(1000);
+        // await wait(1000);
 
-        expandCount = 4 - emptySpaces.length - pouringLiquids.length;
-        // shrink A pouringLiquids
-        pouringLiquids.forEach((liquid) => liquid.setLevel(0));
-        // expand A remainingLiquids
-        remainingLiquids.forEach((liquid) => liquid.setLevel(100 / expandCount));
+        // expandCount = 4 - emptySpaces.length - pouringLiquids.length;
+        // // shrink A pouringLiquids
+        // pouringLiquids.forEach((liquid) => liquid.setLevel(0));
+        // // expand A remainingLiquids
+        // remainingLiquids.forEach((liquid) => liquid.setLevel(100 / expandCount));
 
-        tubeA.pourInto(tubeB, this.element);
+        tubeA.pourInto(tubeB);
         // await wait(1000);
 
         // update A.liquids

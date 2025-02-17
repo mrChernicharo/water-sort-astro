@@ -31,6 +31,7 @@ export class Liquid {
         liquidEle.dataset.color = String(cssColor);
 
         liquidEle.style.backgroundColor = cssColor;
+        liquidEle.style.height = `${this.level}%`;
         return liquidEle;
     }
 
@@ -84,6 +85,12 @@ export class Tube {
     isComplete() {
         return this.liquids.filter((lq) => lq.color != "_").length == 4;
     }
+    getTopLiquid() {
+        return this.liquids.filter((lq) => lq.color != "_")[0];
+    }
+    getLiquidByIdx(idx: number) {
+        return this.liquids.find((lq) => lq.idx == idx);
+    }
 
     getTopColor() {
         let topColor = null;
@@ -125,38 +132,82 @@ export class Tube {
         return result;
     }
 
-    pourInto(other: Tube, container: HTMLDivElement) {
+    async pourInto(other: Tube) {
         const result = performWaterSpill(this.colorStr, other.colorStr);
+        const spillCount = getSpillCount(this.colorStr, other.colorStr);
         const { tubeA, tubeB } = result;
 
-        this.colorStr = tubeA;
-        this.liquids = [];
-        for (let i = 3; i >= 0; i--) {
-            const ch = tubeA[i];
-            this.liquids.push(new Liquid(ch, i));
-        }
+        await this.drain(tubeA, spillCount);
+        other.fill(tubeB, spillCount);
 
-        other.liquids = [];
-        other.colorStr = tubeB;
-        for (let i = 3; i >= 0; i--) {
-            const ch = tubeB[i];
-            other.liquids.push(new Liquid(ch, i, 0));
-        }
+        // this.colorStr = tubeA;
+        // this.liquids = [];
+        // for (let i = 3; i >= 0; i--) {
+        //     const ch = tubeA[i];
+        //     this.liquids.push(new Liquid(ch, i));
+        // }
 
-        this.updateLiquids(container);
-        other.updateLiquids(container);
+        // other.liquids = [];
+        // other.colorStr = tubeB;
+        // for (let i = 3; i >= 0; i--) {
+        //     const ch = tubeB[i];
+        //     other.liquids.push(new Liquid(ch, i, 0));
+        // }
+
+        // this.updateLiquids(container);
+        // other.updateLiquids(container);
     }
 
-    updateLiquids(container: HTMLDivElement, nextLevel?: number) {
-        this.element.innerHTML = "";
+    async drain(newColorStr: string, spillCount: number) {
+        const tubeEle = this.element;
+        const topLiquid = this.getTopLiquid();
+        console.log("drain", { topLiquid, tubeEle, tube: this });
 
-        this.liquids.forEach((liquid) => {
-            this.element.append(liquid.element);
-            if (nextLevel != undefined) {
-                liquid.setLevel(nextLevel);
-            }
-        });
+        let liquidIdx = topLiquid.idx;
 
-        console.log(this, container, this.element);
+        while (spillCount > 0) {
+            const liquid = this.getLiquidByIdx(liquidIdx);
+            if (!liquid) throw Error("no liquid found");
+
+            const newEmpty = new Liquid("_", liquidIdx, 0);
+
+            liquid.element.insertAdjacentElement("beforebegin", newEmpty.element);
+
+            console.log({
+                newEle: newEmpty.element,
+            });
+
+            gsap.to(newEmpty.element, { height: `25%` });
+            gsap.to(liquid.element, { height: 0 });
+
+            liquidIdx--;
+            spillCount--;
+        }
     }
+    async fill(newColorStr: string, spillCount: number) {
+        const tubeEle = this.element;
+        const topLiquid = this.getTopLiquid();
+
+        // console.log("fill", {
+        //     topLiquid,
+        //     tubeEle,
+        //     // spillCount,
+        //     // prevColorsStr: this.colorStr,
+        //     // newColorStr,
+        //     tube: this,
+        // });
+    }
+
+    // updateLiquids(container: HTMLDivElement, nextLevel?: number) {
+    //     this.element.innerHTML = "";
+
+    //     this.liquids.forEach((liquid) => {
+    //         this.element.append(liquid.element);
+    //         if (nextLevel != undefined) {
+    //             liquid.setLevel(nextLevel);
+    //         }
+    //     });
+
+    //     console.log(this, container, this.element);
+    // }
 }
