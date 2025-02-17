@@ -9,45 +9,45 @@ const levelData = json[levelIdx];
 ---
 
 <style is:global>
-  #board {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 36px;
-    justify-content: center;
-    border: 1px solid red;
-    padding-block: 36px;
-  }
-
-  .tube {
-    position: relative;
-    height: 200px; /* TUBE_HEIGHT */
-    width: 50px; /* TUBE_WIDTH */
-    border: 1px solid black;
-    /* overflow: hidden; */
-
-    &.selected {
-      box-shadow: 0px 0px 12px dodgerblue;
+    #board {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 36px;
+        justify-content: center;
+        border: 1px solid red;
+        padding-block: 36px;
     }
-  }
 
-  .liquid {
-    height: 25%;
-    width: 50px; /* TUBE_WIDTH */
-  }
+    .tube {
+        position: relative;
+        height: 200px; /* TUBE_HEIGHT */
+        width: 50px; /* TUBE_WIDTH */
+        border: 1px solid black;
+        /* overflow: hidden; */
+
+        &.selected {
+            box-shadow: 0px 0px 12px dodgerblue;
+        }
+    }
+
+    .liquid {
+        height: 25%;
+        width: 50px; /* TUBE_WIDTH */
+    }
 </style>
 
 <h1>Level {levelNumber}</h1>
 
 <div id="board-info">
-  {levelData.board}
+    {levelData.board}
 </div>
 
 <div id="board"></div>
 
 <script>
-  import { Level } from "../../scripts/Tube";
+    import { Level } from "../../scripts/Level";
 
-  const map = document.querySelector("#board-info")!.textContent!.trim();
-  const level = new Level(map);
-  console.log(level);
+    const map = document.querySelector("#board-info")!.textContent!.trim();
+    const level = new Level(map);
+    console.log(level);
 </script>

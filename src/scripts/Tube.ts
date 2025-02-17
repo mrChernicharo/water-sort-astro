@@ -1,6 +1,7 @@
+import gsap from "gsap";
 import { COLORS, type Color } from "./constants";
-import { parseMap } from "./helpers";
-import { getSpillCount } from "./old/old";
+import { parseMap, wait } from "./helpers";
+import { getSpillCount, performWaterSpill } from "./old/old";
 
 export class Liquid {
     color: string;
@@ -8,12 +9,13 @@ export class Liquid {
     level: number;
     element: HTMLDivElement;
 
-    constructor(color: string, idx: number) {
+    constructor(color: string, idx: number, level = 25) {
         this.color = color;
         this.idx = idx;
-        this.level = 25;
+        this.level = level;
 
         this.element = this.#createElement();
+        return this;
     }
 
     #createElement() {
@@ -33,8 +35,11 @@ export class Liquid {
     }
 
     setLevel(level: number) {
-        this.level = level;
+        const prevLevel = this.level;
         this.element.style.height = `${level}%`;
+        this.level = level;
+
+        // gsap.fromTo(this.element, { height: `${prevLevel}%` }, { height: `${level}%` });
     }
 }
 
@@ -49,7 +54,6 @@ export class Tube {
 
         this.colorStr = colorStr;
 
-        // for (let i = 0; i < 4; i++) {
         for (let i = 3; i >= 0; i--) {
             this.liquids.push(new Liquid(colorStr[i], i));
         }
@@ -77,6 +81,10 @@ export class Tube {
         this.element.classList.remove("selected");
     }
 
+    isComplete() {
+        return this.liquids.filter((lq) => lq.color != "_").length == 4;
+    }
+
     getTopColor() {
         let topColor = null;
         for (let i = 0; i < 4; i++) {
@@ -87,107 +95,68 @@ export class Tube {
                 break;
             }
         }
-        // return this.liquids.filter((lq) => lq.color != "_").at(-1)?.color || null;
         return topColor;
     }
 
-    isComplete() {
-        return this.liquids.filter((lq) => lq.color != "_").length == 4;
+    parsePouringLiquids(spillCount: number) {
+        let liqIdx = 0;
+        let minPourIdx = 3;
+        const pouringLiquids: Liquid[] = [];
+
+        while (spillCount > 0) {
+            const liquid = this.liquids[liqIdx];
+            liqIdx++;
+
+            if (liquid.color == "_") continue;
+            else {
+                pouringLiquids.push(liquid);
+                minPourIdx = liquid.idx;
+                spillCount--;
+            }
+        }
+        pouringLiquids.reverse();
+
+        const remainingLiquids = this.liquids.filter((lq) => lq.idx < minPourIdx);
+
+        const emptySpaces = this.liquids.filter((lq) => lq.color == "_");
+
+        const result = { emptySpaces, pouringLiquids, remainingLiquids };
+        // console.log("getPouringLiquids", result, { minPourIdx });
+        return result;
     }
-}
 
-export class Level {
-    board: Tube[];
-    selectedTubeIdx: number | null;
-    element: HTMLDivElement;
+    pourInto(other: Tube, container: HTMLDivElement) {
+        const result = performWaterSpill(this.colorStr, other.colorStr);
+        const { tubeA, tubeB } = result;
 
-    constructor(map: string) {
-        this.selectedTubeIdx = null;
+        this.colorStr = tubeA;
+        this.liquids = [];
+        for (let i = 3; i >= 0; i--) {
+            const ch = tubeA[i];
+            this.liquids.push(new Liquid(ch, i));
+        }
 
-        this.element = document.querySelector("#board") as HTMLDivElement;
+        other.liquids = [];
+        other.colorStr = tubeB;
+        for (let i = 3; i >= 0; i--) {
+            const ch = tubeB[i];
+            other.liquids.push(new Liquid(ch, i, 0));
+        }
 
-        this.board = parseMap(map).map((colors, i) => {
-            const tube = new Tube(colors, i);
+        this.updateLiquids(container);
+        other.updateLiquids(container);
+    }
 
-            this.element.append(tube.element);
+    updateLiquids(container: HTMLDivElement, nextLevel?: number) {
+        this.element.innerHTML = "";
 
-            return tube;
+        this.liquids.forEach((liquid) => {
+            this.element.append(liquid.element);
+            if (nextLevel != undefined) {
+                liquid.setLevel(nextLevel);
+            }
         });
 
-        window.addEventListener("click", this.#onWindowClick.bind(this));
-    }
-
-    getTubeByIdx(idx: number) {
-        return this.board[idx];
-    }
-
-    // @TODO: fix this
-    canPour(tubeA: Tube, tubeB: Tube) {
-        const fromColor = tubeA.getTopColor();
-        const toColor = tubeB.getTopColor();
-        console.log("canPour", { tubeA, fromColor, tubeB, toColor });
-        if (fromColor == null) return false;
-        if (fromColor && toColor == null) return true;
-        else return fromColor == toColor && !tubeB.isComplete();
-    }
-
-    pour(tubeA: Tube, tubeB: Tube) {
-        const spillCount = getSpillCount(tubeA.colorStr, tubeB.colorStr);
-
-        console.log("Pour!", { tubeA, tubeB, spillCount });
-
-        // translate tubeA until it stays on top of tubeB
-
-        // rotate A inwards
-        // shrink A top
-        // expand A rest
-
-        // update A.liquids
-
-        // rotate backwards
-        // reset A levels
-    }
-
-    #onWindowClick(e: MouseEvent) {
-        const composedPath = e.composedPath();
-        const clickedTube = composedPath.find((el) =>
-            (el as HTMLElement)?.classList?.contains("tube")
-        ) as HTMLDivElement;
-        // console.log(composedPath, clickedTube);
-        if (clickedTube) {
-            const tubeIdx = Number(clickedTube.dataset.idx);
-            const tube = this.getTubeByIdx(tubeIdx);
-
-            if (this.selectedTubeIdx == null) {
-                this.selectedTubeIdx = tube.idx;
-                tube.select();
-            } else {
-                if (this.selectedTubeIdx == tube.idx) {
-                    this.selectedTubeIdx = null;
-                    tube.deselect();
-                } else {
-                    const prevTube = this.getTubeByIdx(this.selectedTubeIdx);
-                    const canPour = this.canPour(prevTube, tube);
-
-                    if (canPour) {
-                        this.pour(prevTube, tube);
-                        this.selectedTubeIdx = null;
-                        prevTube.deselect();
-                    } else {
-                        this.selectedTubeIdx = tubeIdx;
-                        prevTube.deselect();
-                        tube.select();
-                    }
-                }
-            }
-        }
-
-        if (!clickedTube) {
-            if (this.selectedTubeIdx != null) {
-                const tube = this.getTubeByIdx(this.selectedTubeIdx);
-                this.selectedTubeIdx = null;
-                tube.deselect();
-            }
-        }
+        console.log(this, container, this.element);
     }
 }
