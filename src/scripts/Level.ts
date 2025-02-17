@@ -4,24 +4,18 @@ import { Tube } from "./Tube";
 
 export class Level {
     map: string;
+    history: string[];
     board!: Tube[];
     selectedTubeIdx: number | null;
     element: HTMLDivElement;
 
     constructor(map: string) {
         this.map = map;
+        this.history = [map];
 
         this.selectedTubeIdx = null;
 
         this.element = document.querySelector("#board") as HTMLDivElement;
-
-        this.#updateBoard();
-
-        window.addEventListener("click", this.#onWindowClick.bind(this));
-    }
-
-    #updateBoard() {
-        this.element.innerHTML = "";
 
         this.board = parseMap(this.map).map((colors, i) => {
             const tube = new Tube(colors, i);
@@ -30,6 +24,8 @@ export class Level {
 
             return tube;
         });
+
+        window.addEventListener("click", this.#onWindowClick.bind(this));
     }
 
     getTubeByIdx(idx: number) {
@@ -48,46 +44,16 @@ export class Level {
     async pour(tubeA: Tube, tubeB: Tube) {
         const spillCount = getSpillCount(tubeA.colorStr, tubeB.colorStr);
 
-        const { pouringLiquids, emptySpaces, remainingLiquids } =
-            tubeA.parsePouringLiquids(spillCount);
-
-        console.log({ pouringLiquids, emptySpaces, remainingLiquids });
-
-        // translate tubeA until it stays on top of tubeB
-        // rotate A inwards
-
-        // let expandCount = 4 - emptySpaces.length;
-        // // shrink A emptySpaces
-        // emptySpaces.forEach((emptyLiq) => emptyLiq.setLevel(0));
-
-        // // expand A pouringLiquids + remainingLiquids
-        // [...pouringLiquids, ...remainingLiquids].forEach((liquid) =>
-        //     liquid.setLevel(100 / expandCount)
-        // );
-
-        // await wait(1000);
-
-        // expandCount = 4 - emptySpaces.length - pouringLiquids.length;
-        // // shrink A pouringLiquids
-        // pouringLiquids.forEach((liquid) => liquid.setLevel(0));
-        // // expand A remainingLiquids
-        // remainingLiquids.forEach((liquid) => liquid.setLevel(100 / expandCount));
-
+        // const { pouringLiquids, emptySpaces, remainingLiquids } =
+        //     tubeA.parsePouringLiquids(spillCount);
+        // console.log({ pouringLiquids, emptySpaces, remainingLiquids });
         await tubeA.pourInto(tubeB);
-        // await wait(1000);
-
-        // update A.liquids
-
-        // console.log(tubeA, tubeB);
-
-        // rotate backwards
-
-        // reset A levels
-        // tubeA.liquids.forEach((liquid) => liquid.setLevel(25));
 
         const updatedMap = getMapAfterMove(this.map, { from: tubeA.idx, to: tubeB.idx });
+        this.history.push(updatedMap);
         this.map = updatedMap;
-        // this.#updateBoard();
+
+        console.log(this);
     }
 
     #onWindowClick(e: MouseEvent) {

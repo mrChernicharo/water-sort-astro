@@ -97,7 +97,6 @@ export class Tube {
         const liquidIdx = this.liquids.findIndex((lq) => lq.idx == idx);
         return this.liquids[liquidIdx];
     }
-
     getTopColor() {
         let topColor = null;
         for (let i = 0; i < 4; i++) {
@@ -144,28 +143,8 @@ export class Tube {
         const result = performWaterSpill(this.colorStr, other.colorStr);
         const { tubeA, tubeB } = result;
 
-        await Promise.all([
-            this.drain(tubeA, spillCount),
-            other.fill(tubeB, this.getTopColor()!, spillCount),
-        ]);
-        // this.colorStr = tubeA;
-        // this.liquids = [];
-        // for (let i = 3; i >= 0; i--) {
-        //     const ch = tubeA[i];
-        //     this.liquids.push(new Liquid(ch, i));
-        // }
-
-        // other.liquids = [];
-        // other.colorStr = tubeB;
-        // for (let i = 3; i >= 0; i--) {
-        //     const ch = tubeB[i];
-        //     other.liquids.push(new Liquid(ch, i, 0));
-        // }
-
-        // this.updateLiquids(container);
-        // other.updateLiquids(container);
+        await Promise.all([this.drain(tubeA, spillCount), other.fill(tubeB, spillCount)]);
     }
-
     async drain(resultColorStr: string, spillCount: number) {
         const topLiquid = this.getTopLiquid();
 
@@ -190,11 +169,12 @@ export class Tube {
             spillCount--;
         }
         this.colorStr = resultColorStr;
-        this.#clearTempElements();
+        this.#clearTemporaryElements();
         // console.log("drain", this);
     }
-    async fill(resultColorStr: string, color: string, spillCount: number) {
+    async fill(resultColorStr: string, spillCount: number) {
         const topLiquid = this.getTopLiquid();
+        const color = resultColorStr.replaceAll("_", "").at(-1) || "_";
 
         let liquidIdx = 0;
         if (topLiquid) {
@@ -220,11 +200,11 @@ export class Tube {
         }
 
         this.colorStr = resultColorStr;
-        this.#clearTempElements();
+        this.#clearTemporaryElements();
         // console.log("fill", this);
     }
 
-    #clearTempElements() {
+    #clearTemporaryElements() {
         const removingEles: Element[] = [];
         [...this.element.children].forEach((ele) => {
             const height = ele.computedStyleMap().get("height")?.toString();
@@ -235,17 +215,4 @@ export class Tube {
         });
         removingEles.forEach((ele) => ele.remove());
     }
-
-    // updateLiquids(container: HTMLDivElement, nextLevel?: number) {
-    //     this.element.innerHTML = "";
-
-    //     this.liquids.forEach((liquid) => {
-    //         this.element.append(liquid.element);
-    //         if (nextLevel != undefined) {
-    //             liquid.setLevel(nextLevel);
-    //         }
-    //     });
-
-    //     console.log(this, container, this.element);
-    // }
 }

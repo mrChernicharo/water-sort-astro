@@ -9,6 +9,10 @@ const levelData = json[levelIdx];
 ---
 
 <style is:global>
+    * {
+        /* box-sizing: border-box; */
+    }
+
     #board {
         display: flex;
         flex-wrap: wrap;
@@ -31,6 +35,7 @@ const levelData = json[levelIdx];
     }
 
     .liquid {
+        /* border: 1px solid black; */
         height: 25%;
         width: 50px; /* TUBE_WIDTH */
     }
