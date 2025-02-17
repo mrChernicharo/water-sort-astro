@@ -2,8 +2,9 @@ import gsap from "gsap";
 import { COLORS, type Color } from "./constants";
 import { parseMap, wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
+import { cloneDeep } from "lodash";
 
-const duration = 3;
+const duration = 1;
 
 export class Liquid {
     color: string;
@@ -161,32 +162,58 @@ export class Tube {
         await Promise.all([this.drain(tubeA, spillCount), other.fill(tubeB, spillCount)]);
     }
     async drain(resultColorStr: string, spillCount: number) {
-        this.rotateTo(20);
+        const { emptySpaces, pouringLiquids, remainingLiquids } =
+            this.parsePouringLiquids(spillCount);
 
-        const topLiquid = this.getTopLiquid();
+        console.log("drain", {
+            emptySpaces: cloneDeep(emptySpaces),
+            pouringLiquids: cloneDeep(pouringLiquids),
+            remainingLiquids: cloneDeep(remainingLiquids),
+        });
 
-        let liquidIdx = topLiquid.idx;
+        const largestChange = Math.max(
+            remainingLiquids.length,
+            pouringLiquids.length,
+            emptySpaces.length
+        );
+        const level = 100 / remainingLiquids.length;
 
-        while (spillCount > 0) {
-            let liquid = this.getLiquidByIdx(liquidIdx);
-            if (!liquid) throw Error("no liquid found");
+        let pouringLiquid;
 
-            const newEmptyLiquid = new Liquid("_", liquidIdx, 0);
+        for (let i = 0; i < largestChange; i++) {
+            emptySpaces[i]?.setLevel(0);
 
-            liquid.element.insertAdjacentElement("beforebegin", newEmptyLiquid.element);
-
-            newEmptyLiquid.setLevel(25);
-            await liquid.setLevel(0);
-
-            liquid.color = newEmptyLiquid.color;
-            liquid.level = newEmptyLiquid.level;
-            liquid.element = newEmptyLiquid.element;
-
-            liquidIdx--;
-            spillCount--;
+            if (remainingLiquids.length > 0) {
+                pouringLiquids[i]?.setLevel(0);
+                remainingLiquids[i]?.setLevel(level);
+            }
         }
 
-        this.rotateTo(0);
+        const enlargedLiquids = this.liquids.filter((lq) => lq.level > 25);
+
+        // let lgIdx = 0;
+        console.log("drain", { spillCount, enlargedLiquids: cloneDeep(enlargedLiquids) });
+        //
+        await wait(2000);
+
+        for (let i = 0; i < largestChange; i++) {
+            const pouring = pouringLiquids[i];
+            if (pouring) {
+                let liquid = this.getLiquidByIdx(pouring.idx);
+                const newEmptyLiquid = new Liquid("_", liquid.idx, 0);
+
+                liquid.element.insertAdjacentElement("beforebegin", newEmptyLiquid.element);
+                liquid.color = newEmptyLiquid.color;
+                liquid.level = newEmptyLiquid.level;
+                liquid.element = newEmptyLiquid.element;
+                liquid.setLevel(25);
+            }
+            emptySpaces[i]?.setLevel(25);
+            remainingLiquids[i]?.setLevel(25);
+        }
+        await wait(2000);
+
+        // this.rotateTo(0);
         this.colorStr = resultColorStr;
         this.#clearTemporaryElements();
         // console.log("drain", this);
@@ -223,15 +250,20 @@ export class Tube {
         // console.log("fill", this);
     }
 
-    #clearTemporaryElements() {
-        const removingEles: Element[] = [];
+    getZeroHeightLiquids() {
+        const zeroHeightEles: Element[] = [];
         [...this.element.children].forEach((ele) => {
             const height = ele.computedStyleMap().get("height")?.toString();
 
             if (height && parseInt(height) == 0) {
-                removingEles.push(ele);
+                zeroHeightEles.push(ele);
             }
         });
+        return zeroHeightEles;
+    }
+
+    #clearTemporaryElements() {
+        const removingEles = this.getZeroHeightLiquids();
         removingEles.forEach((ele) => ele.remove());
     }
 }

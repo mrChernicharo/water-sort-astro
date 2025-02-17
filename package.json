@@ -13,9 +13,13 @@
     "@astrojs/netlify": "^6.2.0",
     "astro": "^5.2.5",
     "gsap": "^3.12.7",
+    "lodash": "^4.17.21",
     "vitest": "^3.0.5"
   },
   "volta": {
     "node": "23.7.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.15"
   }
 }
