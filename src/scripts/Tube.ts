@@ -28,7 +28,6 @@ export class Liquid {
 
         liquidEle.classList.add("liquid");
         liquidEle.classList.add(`liquid-${this.idx}`);
-        liquidEle.classList.add(cssColor);
 
         liquidEle.dataset.idx = String(this.idx);
         liquidEle.dataset.color = String(cssColor);
@@ -199,18 +198,11 @@ export class Tube {
         const { emptySpaces, pouringLiquids, remainingLiquids } =
             this.parsePouringLiquids(spillCount);
 
-        let remaining = pouringLiquids.concat(remainingLiquids);
-        let level = 100 / remaining.length;
-
         // drain empty
-        emptySpaces.forEach((lq) => lq.setLevel(0));
-        // expand the rest
-        remaining.forEach((lq) => lq.setLevel(level));
-
-        // await wait(duration * 1000);
-        this.rotateTo(80);
-
-        console.log("drain pouring", { pouringLiquids, remainingLiquids });
+        if (remainingLiquids.length) {
+            emptySpaces.forEach((lq) => lq.setLevel(0));
+        }
+        this.rotateTo(75);
 
         for (const [i, lq] of pouringLiquids.entries()) {
             const newEmptyLiquid = new Liquid("_", lq.idx, 0);
@@ -220,24 +212,26 @@ export class Tube {
                 newEmptyLiquid.setLevel(100);
             }
 
-            lq.setLevel(0);
-            lq.element.classList.add("old");
             lq.element.insertAdjacentElement("beforebegin", newEmptyLiquid.element);
+            lq.element.classList.add("old");
+            await lq.setLevel(0);
             lq.color = newEmptyLiquid.color;
             lq.element = newEmptyLiquid.element;
         }
 
-        remaining = remainingLiquids;
-
-        if (remaining.length) {
-            level = 100 / remaining.length;
-            remaining.forEach((lq) => lq.setLevel(level));
+        if (remainingLiquids.length) {
+            remainingLiquids.forEach((lq) => lq.setLevel(100 / remainingLiquids.length));
         } else {
-            // enlarge one of the empty to push down the pouring
+            // enlarge one of the empty to push below the pouring liquid
             if (emptySpaces[0]) emptySpaces[0].setLevel(100);
         }
 
         await wait(duration * 1000);
+        this.rotateTo(0);
+
+        // scale back
+        console.log("Time to scale back", this.liquids);
+        this.liquids.forEach((lq) => lq.setLevel(25));
 
         [...this.element.children].forEach((child) => {
             // console.log(child);
@@ -245,12 +239,6 @@ export class Tube {
                 child.remove();
             }
         });
-
-        // scale back
-        console.log("Time to scale back", this.liquids);
-        this.liquids.forEach((lq) => lq.setLevel(25));
-
-        this.rotateTo(0);
         console.log("drain", this);
     }
     async fill(resultColorStr: string, spillCount: number) {
