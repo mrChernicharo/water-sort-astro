@@ -4,7 +4,7 @@ import { parseMap, wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
 import { cloneDeep } from "lodash";
 
-const duration = 1;
+const duration = 3;
 
 export class Liquid {
     color: string;
@@ -158,6 +158,15 @@ export class Tube {
 
     rotateTo(angle: number) {
         gsap.to(this.element, { rotate: `${angle}deg`, duration });
+
+        this.liquids.forEach((lq) => {
+            const markers = [...lq.element.children]
+                .filter((el) => el.classList.contains("marker"))
+                .forEach((marker) => {
+                    gsap.to(marker, { rotate: `${-angle}deg`, duration });
+                });
+        });
+        console.log("rotate", { angle });
     }
 
     async pourInto(other: Tube) {
@@ -170,6 +179,7 @@ export class Tube {
     }
     async drain(resultColorStr: string, spillCount: number) {
         this.colorStr = resultColorStr;
+        this.rotateTo(30);
 
         const { emptySpaces, pouringLiquids, remainingLiquids } =
             this.parsePouringLiquids(spillCount);
@@ -224,8 +234,7 @@ export class Tube {
         console.log("Time to scale back", this.liquids);
         this.liquids.forEach((lq) => lq.setLevel(25));
 
-        // // this.rotateTo(0);
-        // this.#clearTemporaryElements();
+        this.rotateTo(0);
         console.log("drain", this);
     }
     async fill(resultColorStr: string, spillCount: number) {
