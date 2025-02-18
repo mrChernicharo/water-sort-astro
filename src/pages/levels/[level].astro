@@ -37,6 +37,7 @@ const levelData = json[levelIdx];
     }
 
     .liquid {
+        position: relative;
         border: 1px solid black;
         height: 25%;
         width: 50px; /* TUBE_WIDTH */
@@ -50,6 +51,18 @@ const levelData = json[levelIdx];
         position: absolute;
         top: -50px;
         left: 22.5px;
+    }
+
+    .marker {
+        width: 100px;
+        height: 1px;
+        background-color: black;
+        position: absolute;
+        top: 0;
+    }
+
+    .marker-right {
+        right: 0;
     }
 </style>
 

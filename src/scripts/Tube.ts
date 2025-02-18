@@ -35,6 +35,13 @@ export class Liquid {
 
         liquidEle.style.backgroundColor = cssColor;
         liquidEle.style.height = `${this.level}%`;
+
+        ["left", "right"].forEach((side) => {
+            const maker = document.createElement("div");
+            maker.classList.add("marker");
+            maker.classList.add(`marker-${side}`);
+            liquidEle.append(maker);
+        });
         return liquidEle;
     }
 
