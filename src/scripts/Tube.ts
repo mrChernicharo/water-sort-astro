@@ -187,14 +187,9 @@ export class Tube {
         for (const lq of pouringLiquids) {
             const newEmptyLiquid = new Liquid("_", lq.idx, 0);
             // newEmptyLiquid.element.classList.add("new");
+            lq.setLevel(0);
             lq.element.classList.add("old");
             lq.element.insertAdjacentElement("beforebegin", newEmptyLiquid.element);
-            if (remainingLiquids.length) {
-                lq.setLevel(0);
-            } else {
-                lq.setLevel(0);
-                newEmptyLiquid.setLevel(100);
-            }
             lq.color = newEmptyLiquid.color;
             lq.element = newEmptyLiquid.element;
         }
@@ -205,29 +200,22 @@ export class Tube {
             level = 100 / remaining.length;
             remaining.forEach((lq) => lq.setLevel(level));
         } else {
-            console.log("duuuh");
-            // emptySpaces.forEach((lq) => lq.setLevel(25));
+            // enlarge one of the empty to push down the pouring
+            emptySpaces[0]?.setLevel(100);
         }
 
         await wait(duration * 1000);
 
-        // // scale back
-        console.log("Time to scale back", this.liquids);
-
-        // this.liquids.filter(lq => lq.color == '_').forEach(lq => {
-        //     lq.
-        // })
-
         [...this.element.children].forEach((child) => {
-            console.log(child);
+            // console.log(child);
             if (child.classList.contains("old")) {
                 child.remove();
             }
         });
 
+        // scale back
+        console.log("Time to scale back", this.liquids);
         this.liquids.forEach((lq) => lq.setLevel(25));
-
-        await wait(duration * 1000);
 
         // // this.rotateTo(0);
         // this.#clearTemporaryElements();
