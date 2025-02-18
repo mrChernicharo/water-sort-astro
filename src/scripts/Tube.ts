@@ -4,7 +4,7 @@ import { parseMap, wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
 import { cloneDeep } from "lodash";
 
-const duration = 3;
+const duration = 1;
 
 export class Liquid {
     color: string;
@@ -33,14 +33,23 @@ export class Liquid {
         liquidEle.dataset.idx = String(this.idx);
         liquidEle.dataset.color = String(cssColor);
 
-        liquidEle.style.backgroundColor = cssColor;
+        // liquidEle.style.backgroundColor = cssColor;
         liquidEle.style.height = `${this.level}%`;
 
-        ["left", "right"].forEach((side) => {
-            const maker = document.createElement("div");
-            maker.classList.add("marker");
-            maker.classList.add(`marker-${side}`);
-            liquidEle.append(maker);
+        ["left"].forEach((side) => {
+            // ["left", "right"].forEach((side) => {
+            const marker = document.createElement("div");
+            marker.classList.add("marker");
+            marker.classList.add(`marker-${side}`);
+
+            const layer = document.createElement("div");
+            layer.classList.add("layer");
+            layer.classList.add(cssColor);
+
+            layer.style.backgroundColor = cssColor;
+
+            marker.append(layer);
+            liquidEle.append(marker);
         });
         return liquidEle;
     }
@@ -156,17 +165,24 @@ export class Tube {
         return result;
     }
 
-    rotateTo(angle: number) {
-        gsap.to(this.element, { rotate: `${angle}deg`, duration });
+    async rotateTo(angle: number) {
+        return new Promise((resolve) => {
+            this.liquids.forEach((lq) => {
+                const markers = [...lq.element.children].filter((el) =>
+                    el.classList.contains("marker")
+                );
 
-        this.liquids.forEach((lq) => {
-            const markers = [...lq.element.children]
-                .filter((el) => el.classList.contains("marker"))
-                .forEach((marker) => {
+                markers.forEach((marker) => {
                     gsap.to(marker, { rotate: `${-angle}deg`, duration });
                 });
+            });
+
+            console.log("rotate", { angle });
+
+            gsap.to(this.element, { rotate: `${angle}deg`, duration }).then(() => {
+                resolve(true);
+            });
         });
-        console.log("rotate", { angle });
     }
 
     async pourInto(other: Tube) {
@@ -179,7 +195,6 @@ export class Tube {
     }
     async drain(resultColorStr: string, spillCount: number) {
         this.colorStr = resultColorStr;
-        this.rotateTo(30);
 
         const { emptySpaces, pouringLiquids, remainingLiquids } =
             this.parsePouringLiquids(spillCount);
@@ -192,7 +207,8 @@ export class Tube {
         // expand the rest
         remaining.forEach((lq) => lq.setLevel(level));
 
-        await wait(duration * 1000);
+        // await wait(duration * 1000);
+        this.rotateTo(80);
 
         console.log("drain pouring", { pouringLiquids, remainingLiquids });
 

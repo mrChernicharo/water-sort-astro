@@ -16,7 +16,7 @@ const levelData = json[levelIdx];
     #board {
         display: flex;
         flex-wrap: wrap;
-        gap: 64px;
+        gap: 36px;
         justify-content: center;
         border: 1px solid red;
         padding-block: 36px;
@@ -29,7 +29,7 @@ const levelData = json[levelIdx];
         width: 50px; /* TUBE_WIDTH */
         background-color: #ddd;
         /* border: 1px solid black; */
-        /* overflow: hidden; */
+        overflow: hidden;
 
         &.selected {
             box-shadow: 0px 0px 12px dodgerblue;
@@ -38,7 +38,7 @@ const levelData = json[levelIdx];
 
     .liquid {
         position: relative;
-        border: 1px solid black;
+        /* border: 1px solid black; */
         height: 25%;
         width: 50px; /* TUBE_WIDTH */
     }
@@ -56,13 +56,21 @@ const levelData = json[levelIdx];
     .marker {
         width: 100px;
         height: 1px;
-        background-color: black;
+        /* background-color: black; */
         position: absolute;
         top: 0;
     }
 
     .marker-right {
         right: 0;
+    }
+
+    .layer {
+        width: 500px;
+        height: 300px;
+        translate: -200px 0px;
+        /* opacity: 0.5; */
+        /* transform-origin: top; */
     }
 </style>
 
