@@ -174,12 +174,6 @@ export class Tube {
         const { emptySpaces, pouringLiquids, remainingLiquids } =
             this.parsePouringLiquids(spillCount);
 
-        console.log("drain empty", {
-            emptySpaces: cloneDeep(emptySpaces),
-            pouringLiquids: cloneDeep(pouringLiquids),
-            remainingLiquids: cloneDeep(remainingLiquids),
-        });
-
         let remaining = pouringLiquids.concat(remainingLiquids);
         let level = 100 / remaining.length;
 
@@ -191,9 +185,15 @@ export class Tube {
         await wait(duration * 1000);
 
         console.log("drain pouring", { pouringLiquids, remainingLiquids });
-        for (const lq of pouringLiquids) {
+
+        for (const [i, lq] of pouringLiquids.entries()) {
             const newEmptyLiquid = new Liquid("_", lq.idx, 0);
-            // newEmptyLiquid.element.classList.add("new");
+
+            // otherwise filled tubes will drain upwards
+            if (i == 3 && pouringLiquids.length == 4) {
+                newEmptyLiquid.setLevel(100);
+            }
+
             lq.setLevel(0);
             lq.element.classList.add("old");
             lq.element.insertAdjacentElement("beforebegin", newEmptyLiquid.element);
@@ -208,7 +208,7 @@ export class Tube {
             remaining.forEach((lq) => lq.setLevel(level));
         } else {
             // enlarge one of the empty to push down the pouring
-            emptySpaces[0]?.setLevel(100);
+            if (emptySpaces[0]) emptySpaces[0].setLevel(100);
         }
 
         await wait(duration * 1000);
