@@ -67,7 +67,7 @@
 
 <div id="board"></div>
 
-<button class="rotate" data-angle="-75">Rotate -75deg</button>
+<!-- <button class="rotate" data-angle="-75">Rotate -75deg</button>
 <button class="rotate" data-angle="-45">Rotate -45deg</button>
 <button class="rotate" data-angle="-20">Rotate -20deg</button>
 <button class="rotate" data-angle="0">Rotate 0deg</button>
@@ -78,67 +78,44 @@
 <button class="rotate" data-angle="70">Rotate 70deg</button>
 <button class="rotate" data-angle="80">Rotate 80deg</button>
 <button class="rotate" data-angle="85">Rotate 85deg</button>
-<button class="rotate" data-angle="90">Rotate 90deg</button>
+<button class="rotate" data-angle="90">Rotate 90deg</button> -->
+
+<button class="pour" data-idx="3">Pour 3</button>
+<button class="pour" data-idx="2">Pour 2</button>
+<button class="pour" data-idx="1">Pour 1</button>
+<button class="pour" data-idx="0">Pour 0</button>
+
+<input type="range" class="rotation-slider" value="0" min="-90" max="90" />
 
 <hr />
 
-<input
-    type="range"
-    class="liquid-slider"
-    name="liquid-3"
-    id="liquid-3"
-    step="5"
-    value="25"
-    min="0"
-    max="100"
-/>
-<input
-    type="range"
-    class="liquid-slider"
-    name="liquid-2"
-    id="liquid-2"
-    step="5"
-    value="25"
-    min="0"
-    max="100"
-/>
-<input
-    type="range"
-    class="liquid-slider"
-    name="liquid-1"
-    id="liquid-1"
-    step="5"
-    value="25"
-    min="0"
-    max="100"
-/>
-<input
-    type="range"
-    class="liquid-slider"
-    name="liquid-0"
-    id="liquid-0"
-    step="5"
-    value="25"
-    min="0"
-    max="100"
-/>
+<input type="range" class="liquid-slider" step="5" value="25" min="0" max="100" />
+<input type="range" class="liquid-slider" step="5" value="25" min="0" max="100" />
+<input type="range" class="liquid-slider" step="5" value="25" min="0" max="100" />
+<input type="range" class="liquid-slider" step="5" value="25" min="0" max="100" />
 
 <script>
     import gsap from "gsap";
     import { COLORS, type Color } from "../scripts/constants";
-    import { parseMap } from "../scripts/helpers";
+    import { parseMap, wait } from "../scripts/helpers";
 
     const map = "rzag";
     // const map = "baba rrra ____";
 
     const boardEle = document.querySelector("#board") as HTMLDivElement;
 
-    const rotateBtns = [...document.querySelectorAll("button.rotate")] as HTMLButtonElement[];
-    rotateBtns.forEach((btn) => {
+    const pourBtns = [...document.querySelectorAll("button.pour")] as HTMLButtonElement[];
+    pourBtns.forEach((btn) => {
         btn.onclick = (e) => {
-            rotateTube(0, Number(btn.dataset["angle"]));
+            pour(0, Number(btn.dataset["idx"]));
         };
     });
+
+    const rotateSlider = document.querySelector("input.rotation-slider") as HTMLInputElement;
+    rotateSlider.oninput = (e) => {
+        rotateTube(0, (e.target as HTMLInputElement).valueAsNumber);
+    };
+
     const liquidSliders = [
         ...document.querySelectorAll("input.liquid-slider"),
     ] as HTMLInputElement[];
@@ -232,7 +209,7 @@
 
     function rotateTube(tubeIdx: number, angle: number) {
         const tubeEle = getTubeByIdx(tubeIdx);
-        gsap.to(tubeEle, { rotate: `${angle}deg` });
+        gsap.to(tubeEle, { rotate: `${angle}deg`, ease: "linear" });
 
         if (!tubeEle) return;
 
@@ -251,14 +228,92 @@
                 }
             }
 
-            gsap.to(marker, { rotate: `${-angle}deg` });
+            gsap.to(marker, { rotate: `${-angle}deg`, ease: "linear" });
         });
     }
 
     function setLiquidHeight(tubeIdx: number, liquidIdx: number, height: number) {
         const liquidEle = getLiquidByIdx(tubeIdx, liquidIdx);
         if (!liquidEle) return;
-        liquidEle.style.height = `${height}%`;
+        // liquidEle.style.height = `${height}%`;
+        gsap.to(liquidEle, { height: `${height}%`, ease: "linear" });
+    }
+
+    async function pour(tubeIdx: number, liquidIdx: number) {
+        const tubeElems = getTubeLiquids(tubeIdx);
+        if (!tubeElems) return;
+        const liquidEle = getLiquidByIdx(tubeIdx, liquidIdx);
+        console.log("pour", liquidEle, liquidIdx);
+
+        const pour3 = async () => {
+            rotateTube(tubeIdx, 50);
+            setLiquidHeight(tubeIdx, 3, 0);
+            setLiquidHeight(tubeIdx, 2, 30);
+            setLiquidHeight(tubeIdx, 1, 30);
+            setLiquidHeight(tubeIdx, 0, 40);
+            await wait(1000);
+            tubeElems[3]?.remove();
+        };
+
+        const pour2 = async () => {
+            rotateTube(tubeIdx, 68);
+            setLiquidHeight(tubeIdx, 3, 0);
+            setLiquidHeight(tubeIdx, 2, 0);
+            setLiquidHeight(tubeIdx, 1, 42);
+            setLiquidHeight(tubeIdx, 0, 58);
+            await wait(1000);
+            tubeElems[2]?.remove();
+        };
+
+        const pour1 = async () => {
+            rotateTube(tubeIdx, 80);
+            setLiquidHeight(tubeIdx, 3, 0);
+            setLiquidHeight(tubeIdx, 2, 0);
+            setLiquidHeight(tubeIdx, 1, 0);
+            setLiquidHeight(tubeIdx, 0, 120);
+            await wait(1000);
+            tubeElems[1]?.remove();
+        };
+
+        const pour0 = async () => {
+            rotateTube(tubeIdx, 88);
+            setLiquidHeight(tubeIdx, 3, 0);
+            setLiquidHeight(tubeIdx, 2, 0);
+            setLiquidHeight(tubeIdx, 1, 0);
+            setLiquidHeight(tubeIdx, 0, 0);
+            await wait(1000);
+            tubeElems[0]?.remove();
+        };
+
+        const rotateBack = () => {
+            setLiquidHeight(tubeIdx, 3, 25);
+            setLiquidHeight(tubeIdx, 2, 25);
+            setLiquidHeight(tubeIdx, 1, 25);
+            setLiquidHeight(tubeIdx, 0, 25);
+            rotateTube(tubeIdx, 0);
+        };
+
+        switch (liquidIdx) {
+            case 3:
+                await pour3();
+                break;
+            case 2:
+                await pour3();
+                await pour2();
+                break;
+            case 1:
+                await pour3();
+                await pour2();
+                await pour1();
+                break;
+            case 0:
+                await pour3();
+                await pour2();
+                await pour1();
+                await pour0();
+                break;
+        }
+        rotateBack();
     }
 
     renderBoard();
