@@ -25,7 +25,7 @@
         display: flex;
         flex-direction: column-reverse;
         border: 1px solid;
-        /* transform: rotate(180deg); */
+        overflow: hidden;
     }
     .liquid {
         position: relative;
@@ -44,12 +44,18 @@
         right: 0;
     }
 
-    /* .layer {
+    .layer {
+        /* width: 1000px;
+        height: 50px;
+        translate: 0px 0px; */
+
+        transform-origin: top;
+        opacity: 0.25;
+
         width: 500px;
-        height: 300px;
+        height: 500px;
         translate: -200px 0px;
-        /* opacity: 0.5; */
-    /* transform-origin: top; */
+    }
 </style>
 
 <h1>ok</h1>
@@ -62,11 +68,11 @@
 <button class="rotate" data-angle="20">Rotate 20deg</button>
 <!-- <button class="rotate" data-angle="30">Rotate 30deg</button> -->
 <button class="rotate" data-angle="40">Rotate 40deg</button>
-<button class="rotate" data-angle="60">Rotate 60deg</button>
 <button class="rotate" data-angle="50">Rotate 50deg</button>
+<button class="rotate" data-angle="60">Rotate 60deg</button>
 <button class="rotate" data-angle="70">Rotate 70deg</button>
 <button class="rotate" data-angle="80">Rotate 80deg</button>
-<button class="rotate" data-angle="85">Rotate 80deg</button>
+<button class="rotate" data-angle="85">Rotate 85deg</button>
 <button class="rotate" data-angle="90">Rotate 90deg</button>
 
 <input
@@ -115,7 +121,8 @@
     import { COLORS, type Color } from "../scripts/constants";
     import { parseMap } from "../scripts/helpers";
 
-    const map = "baba rrra ____";
+    const map = "zzgg";
+    // const map = "baba rrra ____";
 
     const boardEle = document.querySelector("#board") as HTMLDivElement;
 
@@ -153,21 +160,21 @@
             liquid.classList.add("liquid");
             liquid.dataset["idx"] = String(j);
             // liquid.dataset["idx"] = String(tube.length - 1 - j);
-            liquid.style.backgroundColor = cssColor;
+            // liquid.style.backgroundColor = cssColor;
 
             ["left", "right"].forEach((side) => {
-                // ["left", "right"].forEach((side) => {
                 const marker = document.createElement("div");
                 marker.classList.add("marker");
                 marker.dataset["side"] = side;
 
-                // const layer = document.createElement("div");
-                // layer.classList.add("layer");
-                // layer.classList.add(cssColor);
+                const layer = document.createElement("div");
+                layer.classList.add("layer");
+                layer.dataset["side"] = side;
+                layer.dataset["idx"] = String(j);
 
-                // layer.style.backgroundColor = cssColor;
+                layer.style.backgroundColor = cssColor;
 
-                // marker.append(layer);
+                marker.append(layer);
                 liquid.append(marker);
             });
             tubeEle.append(liquid);
@@ -204,8 +211,21 @@
         return markers;
     }
 
+    function getAllLayers(tubeIdx: number) {
+        const layers: HTMLDivElement[] = [];
+        getAllMarkers(tubeIdx).forEach((mk) => {
+            [...mk.children].forEach((ele) => {
+                if (ele.classList.contains(".layer")) {
+                    layers.push(ele as HTMLDivElement);
+                }
+            });
+        });
+        return layers;
+    }
+
     function getAllMarkersFromSide(tubeIdx: number, side: "left" | "right") {
         const markers = getAllMarkers(tubeIdx);
+
         return markers.filter((mk) => mk.dataset["side"] == side);
     }
 
@@ -217,6 +237,7 @@
 
         getAllMarkers(tubeIdx).forEach((marker) => {
             gsap.to(marker, { rotate: `${-angle}deg` });
+
             if (angle > 0) {
                 if (marker.dataset["side"] == "left") {
                     marker.style.display = "block";
@@ -232,6 +253,24 @@
                     marker.style.display = "block";
                 }
             }
+        });
+
+        getAllLayers(tubeIdx).forEach((layer) => {
+            // if (angle > 0) {
+            //     if (layer.dataset["side"] == "left") {
+            //         layer.style.display = "block";
+            //     }
+            //     if (layer.dataset["side"] == "right") {
+            //         layer.style.display = "none";
+            //     }
+            // } else {
+            //     if (layer.dataset["side"] == "left") {
+            //         layer.style.display = "none";
+            //     }
+            //     if (layer.dataset["side"] == "right") {
+            //         layer.style.display = "block";
+            //     }
+            // }
         });
     }
 
