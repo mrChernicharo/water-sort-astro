@@ -1,0 +1,245 @@
+---
+
+---
+
+<style is:global>
+    :root {
+        --tube-width: 50px;
+        --tube-height: 200px;
+    }
+    * {
+        box-sizing: border-box;
+    }
+
+    #board {
+        display: flex;
+        flex-wrap: wrap;
+        border: 1px dashed gray;
+        padding: 64px;
+        gap: 128px;
+    }
+    .tube {
+        position: relative;
+        width: var(--tube-width);
+        height: var(--tube-height);
+        display: flex;
+        flex-direction: column-reverse;
+        border: 1px solid;
+        /* transform: rotate(180deg); */
+    }
+    .liquid {
+        position: relative;
+        width: 100%;
+        height: 25%;
+    }
+    .marker {
+        position: absolute;
+        width: 100px;
+        height: 1px;
+        background-color: black;
+        top: 0;
+    }
+
+    .marker[data-side="right"] {
+        right: 0;
+    }
+
+    /* .layer {
+        width: 500px;
+        height: 300px;
+        translate: -200px 0px;
+        /* opacity: 0.5; */
+    /* transform-origin: top; */
+</style>
+
+<h1>ok</h1>
+
+<div id="board"></div>
+
+<button class="rotate" data-angle="-20">Rotate -20deg</button>
+<button class="rotate" data-angle="0">Rotate 0deg</button>
+<!-- <button class="rotate" data-angle="10">Rotate 10deg</button> -->
+<button class="rotate" data-angle="20">Rotate 20deg</button>
+<!-- <button class="rotate" data-angle="30">Rotate 30deg</button> -->
+<button class="rotate" data-angle="40">Rotate 40deg</button>
+<button class="rotate" data-angle="60">Rotate 60deg</button>
+<button class="rotate" data-angle="50">Rotate 50deg</button>
+<button class="rotate" data-angle="70">Rotate 70deg</button>
+<button class="rotate" data-angle="80">Rotate 80deg</button>
+<button class="rotate" data-angle="85">Rotate 80deg</button>
+<button class="rotate" data-angle="90">Rotate 90deg</button>
+
+<input
+    type="range"
+    class="liquid-slider"
+    name="liquid-3"
+    id="liquid-3"
+    step="5"
+    value="25"
+    min="0"
+    max="100"
+/>
+<input
+    type="range"
+    class="liquid-slider"
+    name="liquid-2"
+    id="liquid-2"
+    step="5"
+    value="25"
+    min="0"
+    max="100"
+/>
+<input
+    type="range"
+    class="liquid-slider"
+    name="liquid-1"
+    id="liquid-1"
+    step="5"
+    value="25"
+    min="0"
+    max="100"
+/>
+<input
+    type="range"
+    class="liquid-slider"
+    name="liquid-0"
+    id="liquid-0"
+    step="5"
+    value="25"
+    min="0"
+    max="100"
+/>
+
+<script>
+    import gsap from "gsap";
+    import { COLORS, type Color } from "../scripts/constants";
+    import { parseMap } from "../scripts/helpers";
+
+    const map = "baba rrra ____";
+
+    const boardEle = document.querySelector("#board") as HTMLDivElement;
+
+    const rotateBtns = [...document.querySelectorAll("button.rotate")] as HTMLButtonElement[];
+    rotateBtns.forEach((btn) => {
+        btn.onclick = (e) => {
+            rotateTube(0, Number(btn.dataset["angle"]));
+        };
+    });
+    const liquidSliders = [
+        ...document.querySelectorAll("input.liquid-slider"),
+    ] as HTMLInputElement[];
+    liquidSliders.forEach((slider, i) => {
+        slider.oninput = (e) => {
+            setLiquidHeight(0, i, slider.valueAsNumber);
+        };
+    });
+
+    function renderBoard() {
+        const tubes = parseMap(map);
+
+        tubes.forEach((tube, i) => renderTube(tube, i));
+    }
+
+    function renderTube(tube: string, i: number) {
+        const tubeEle = document.createElement("div");
+        tubeEle.classList.add("tube");
+        tubeEle.dataset["idx"] = String(i);
+        tube.split("").forEach((char, j) => {
+            const cssColor = COLORS[char as Color];
+
+            if (char == "_") return;
+
+            const liquid = document.createElement("div");
+            liquid.classList.add("liquid");
+            liquid.dataset["idx"] = String(j);
+            // liquid.dataset["idx"] = String(tube.length - 1 - j);
+            liquid.style.backgroundColor = cssColor;
+
+            ["left", "right"].forEach((side) => {
+                // ["left", "right"].forEach((side) => {
+                const marker = document.createElement("div");
+                marker.classList.add("marker");
+                marker.dataset["side"] = side;
+
+                // const layer = document.createElement("div");
+                // layer.classList.add("layer");
+                // layer.classList.add(cssColor);
+
+                // layer.style.backgroundColor = cssColor;
+
+                // marker.append(layer);
+                liquid.append(marker);
+            });
+            tubeEle.append(liquid);
+        });
+
+        boardEle.append(tubeEle);
+    }
+
+    function getTubeByIdx(idx: number): HTMLDivElement | null {
+        return boardEle.querySelector(`.tube[data-idx="${idx}"]`);
+    }
+
+    function getTubeLiquids(tubeIdx: number) {
+        const tubeEle = getTubeByIdx(tubeIdx);
+        if (!tubeEle) return null;
+        const liquidElems = [...tubeEle?.children] as HTMLDivElement[];
+        return liquidElems;
+    }
+
+    function getLiquidByIdx(tubeIdx: number, liquidIdx: number) {
+        const liquidElems = getTubeLiquids(tubeIdx);
+        return liquidElems?.find((lq) => liquidIdx == Number(lq.dataset["idx"])) ?? null;
+    }
+
+    function getAllMarkers(tubeIdx: number) {
+        const markers: HTMLDivElement[] = [];
+        const liquids = getTubeLiquids(tubeIdx) ?? [];
+        liquids.forEach((lq) => {
+            const lqmarkers = [...lq.children] as HTMLDivElement[];
+            lqmarkers.forEach((marker) => {
+                markers.push(marker);
+            });
+        });
+        return markers;
+    }
+
+    function getAllMarkersFromSide(tubeIdx: number, side: "left" | "right") {
+        const markers = getAllMarkers(tubeIdx);
+        return markers.filter((mk) => mk.dataset["side"] == side);
+    }
+
+    function rotateTube(tubeIdx: number, angle: number) {
+        const tubeEle = getTubeByIdx(tubeIdx);
+        gsap.to(tubeEle, { rotate: `${angle}deg` });
+
+        if (!tubeEle) return;
+
+        getAllMarkers(tubeIdx).forEach((marker) => {
+            gsap.to(marker, { rotate: `${-angle}deg` });
+            if (angle > 0) {
+                if (marker.dataset["side"] == "left") {
+                    marker.style.display = "block";
+                }
+                if (marker.dataset["side"] == "right") {
+                    marker.style.display = "none";
+                }
+            } else {
+                if (marker.dataset["side"] == "left") {
+                    marker.style.display = "none";
+                }
+                if (marker.dataset["side"] == "right") {
+                    marker.style.display = "block";
+                }
+            }
+        });
+    }
+
+    function setLiquidHeight(tubeIdx: number, liquidIdx: number, height: number) {
+        const liquidEle = getLiquidByIdx(tubeIdx, liquidIdx);
+        if (!liquidEle) return;
+        liquidEle.style.height = `${height}%`;
+    }
+
+    renderBoard();
+</script>
