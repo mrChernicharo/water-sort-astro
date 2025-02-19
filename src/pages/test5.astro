@@ -18,6 +18,7 @@
         padding: 64px;
         gap: 128px;
     }
+
     .tube {
         position: relative;
         width: var(--tube-width);
@@ -27,34 +28,38 @@
         border: 1px solid;
         overflow: hidden;
     }
+
     .liquid {
         position: relative;
         width: 100%;
         height: 25%;
     }
+
     .marker {
-        position: absolute;
+        position: relative;
         width: 100px;
         height: 1px;
-        background-color: black;
+        /* background-color: red; */
+        translate: 0px 0px;
         top: 0;
+        pointer-events: none;
     }
-
+    .marker[data-side="left"] {
+        left: -50px;
+    }
     .marker[data-side="right"] {
         right: 0;
     }
 
     .layer {
-        /* width: 1000px;
-        height: 50px;
-        translate: 0px 0px; */
-
+        position: absolute;
         transform-origin: top;
-        opacity: 0.25;
-
+        /* opacity: 0.25; */
         width: 500px;
         height: 500px;
         translate: -200px 0px;
+
+        pointer-events: none;
     }
 </style>
 
@@ -62,11 +67,11 @@
 
 <div id="board"></div>
 
+<button class="rotate" data-angle="-75">Rotate -75deg</button>
+<button class="rotate" data-angle="-45">Rotate -45deg</button>
 <button class="rotate" data-angle="-20">Rotate -20deg</button>
 <button class="rotate" data-angle="0">Rotate 0deg</button>
-<!-- <button class="rotate" data-angle="10">Rotate 10deg</button> -->
 <button class="rotate" data-angle="20">Rotate 20deg</button>
-<!-- <button class="rotate" data-angle="30">Rotate 30deg</button> -->
 <button class="rotate" data-angle="40">Rotate 40deg</button>
 <button class="rotate" data-angle="50">Rotate 50deg</button>
 <button class="rotate" data-angle="60">Rotate 60deg</button>
@@ -74,6 +79,8 @@
 <button class="rotate" data-angle="80">Rotate 80deg</button>
 <button class="rotate" data-angle="85">Rotate 85deg</button>
 <button class="rotate" data-angle="90">Rotate 90deg</button>
+
+<hr />
 
 <input
     type="range"
@@ -121,7 +128,7 @@
     import { COLORS, type Color } from "../scripts/constants";
     import { parseMap } from "../scripts/helpers";
 
-    const map = "zzgg";
+    const map = "rzag";
     // const map = "baba rrra ____";
 
     const boardEle = document.querySelector("#board") as HTMLDivElement;
@@ -159,8 +166,7 @@
             const liquid = document.createElement("div");
             liquid.classList.add("liquid");
             liquid.dataset["idx"] = String(j);
-            // liquid.dataset["idx"] = String(tube.length - 1 - j);
-            // liquid.style.backgroundColor = cssColor;
+            liquid.style.zIndex = String(tube.length - j);
 
             ["left", "right"].forEach((side) => {
                 const marker = document.createElement("div");
@@ -173,6 +179,7 @@
                 layer.dataset["idx"] = String(j);
 
                 layer.style.backgroundColor = cssColor;
+                // layer.style.zIndex = String(j + 1);
 
                 marker.append(layer);
                 liquid.append(marker);
@@ -223,12 +230,6 @@
         return layers;
     }
 
-    function getAllMarkersFromSide(tubeIdx: number, side: "left" | "right") {
-        const markers = getAllMarkers(tubeIdx);
-
-        return markers.filter((mk) => mk.dataset["side"] == side);
-    }
-
     function rotateTube(tubeIdx: number, angle: number) {
         const tubeEle = getTubeByIdx(tubeIdx);
         gsap.to(tubeEle, { rotate: `${angle}deg` });
@@ -236,41 +237,21 @@
         if (!tubeEle) return;
 
         getAllMarkers(tubeIdx).forEach((marker) => {
-            gsap.to(marker, { rotate: `${-angle}deg` });
-
-            if (angle > 0) {
+            if (angle < 0) {
                 if (marker.dataset["side"] == "left") {
-                    marker.style.display = "block";
-                }
-                if (marker.dataset["side"] == "right") {
-                    marker.style.display = "none";
+                    marker.style.visibility = "visible";
+                } else {
+                    marker.style.visibility = "hidden";
                 }
             } else {
                 if (marker.dataset["side"] == "left") {
-                    marker.style.display = "none";
-                }
-                if (marker.dataset["side"] == "right") {
-                    marker.style.display = "block";
+                    marker.style.visibility = "hidden";
+                } else {
+                    marker.style.visibility = "visible";
                 }
             }
-        });
 
-        getAllLayers(tubeIdx).forEach((layer) => {
-            // if (angle > 0) {
-            //     if (layer.dataset["side"] == "left") {
-            //         layer.style.display = "block";
-            //     }
-            //     if (layer.dataset["side"] == "right") {
-            //         layer.style.display = "none";
-            //     }
-            // } else {
-            //     if (layer.dataset["side"] == "left") {
-            //         layer.style.display = "none";
-            //     }
-            //     if (layer.dataset["side"] == "right") {
-            //         layer.style.display = "block";
-            //     }
-            // }
+            gsap.to(marker, { rotate: `${-angle}deg` });
         });
     }
 
