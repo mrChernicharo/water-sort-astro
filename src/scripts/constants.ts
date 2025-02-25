@@ -24,7 +24,7 @@ export const COLORS = {
     w: "wheat",
     x: "indianRed",
     y: "yellow",
-    z: "orangeRed",
+    z: "pink",
     _: "transparent",
 };
 

@@ -46,16 +46,13 @@ export class Level {
     }
 
     async pour(tubeA: Tube, tubeB: Tube) {
-        // const spillCount = getSpillCount(tubeA.colorStr, tubeB.colorStr);
-        // const { pouringLiquids, emptySpaces, remainingLiquids } =
-        //     tubeA.parsePouringLiquids(spillCount);
-        // console.log({ pouringLiquids, emptySpaces, remainingLiquids });
         await tubeA.pourInto(tubeB);
-
         const updatedMap = getMapAfterMove(this.map, { from: tubeA.idx, to: tubeB.idx });
+
+        // @TODO remove setBoard
+        this.#setBoard(updatedMap);
         this.history.push(updatedMap);
         this.map = updatedMap;
-
         console.log(this);
     }
 
