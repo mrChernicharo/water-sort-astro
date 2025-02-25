@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { COLORS, TUBE_WIDTH, type Color } from "./constants";
+import { COLORS, HEIGHTS_DATA, ROTATION_DATA, TUBE_WIDTH, type Color } from "./constants";
 import { parseMap, wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
 import { cloneDeep } from "lodash";
@@ -199,19 +199,38 @@ export class Tube {
 
         const { pouringLiquids, remainingLiquids } = this.parsePouringLiquids(spillCount);
 
+        // move towards other
+        // gsap.to(this.element, { x, y });
+
         // should i rotate left or right?
-        const { x } = other.element.getBoundingClientRect();
+        const { x, y } = other.element.getBoundingClientRect();
         const direction = x + TUBE_WIDTH / 2 > window.innerWidth / 2 ? "clockwise" : "anticlock";
 
-        console.log({ pouringLiquids, remainingLiquids, direction });
-        // move towards other && rotate to angle to start spilling // duration * 1
+        // rotate to angle so tube is ready to start spilling // duration * 1
+        let topLiquidIdx = this.getTopLiquid()!.idx;
+        const readyAngle = ROTATION_DATA.ready[topLiquidIdx];
 
-        // rotate to angle during spill // duration *  spillCount
+        for (const lq of this.liquids) {
+            if (topLiquidIdx < 3) {
+                lq.setLevel(HEIGHTS_DATA[topLiquidIdx + 1][lq.idx]);
+            }
+        }
+        console.log({ readyAngle, topLiquidIdx });
+        await this.rotateTo(readyAngle);
+
+        // rotate towards angle where liquid is fully spilled // duration *  spillCount
+        let doneAngle = ROTATION_DATA.done[topLiquidIdx];
+        while (spillCount > 0) {
+            console.log({ doneAngle, topLiquidIdx });
+            await this.rotateTo(doneAngle);
+            topLiquidIdx--;
+            spillCount--;
+            doneAngle = ROTATION_DATA.done[topLiquidIdx];
+        }
 
         // rotate back
-
-        await this.rotateTo(75);
         await this.rotateTo(0);
+        console.log({ pouringLiquids, remainingLiquids, direction });
 
         this.liquids = remainingLiquids;
         console.log("spill", { resultColorStr, spillCount, tube: this });

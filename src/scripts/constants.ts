@@ -35,7 +35,7 @@ export type GameMove = { from: number; to: number };
 export const TUBE_HEIGHT = 200;
 export const TUBE_WIDTH = 50;
 
-export const POUR_DATA: Record<number, Record<number, number>> = {
+export const HEIGHTS_DATA: Record<number, Record<number, number>> = {
     3: {
         3: 0,
         2: 30,
@@ -61,9 +61,17 @@ export const POUR_DATA: Record<number, Record<number, number>> = {
         0: 0,
     },
 };
-export const ROTATION_DATA: Record<number, number> = {
-    0: 91,
-    1: 80,
-    2: 68,
-    3: 50,
+export const ROTATION_DATA: Record<"ready" | "done", Record<number, number>> = {
+    ready: {
+        3: 0,
+        2: 50,
+        1: 68,
+        0: 80,
+    },
+    done: {
+        3: 50,
+        2: 68,
+        1: 80,
+        0: 91,
+    },
 };
