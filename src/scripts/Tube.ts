@@ -203,7 +203,10 @@ export class Tube {
         const result = performWaterSpill(this.colorStr, other.colorStr);
         const { tubeA, tubeB } = result;
 
-        await Promise.all([this.spill(other, tubeA, spillCount), other.fill(tubeB, spillCount)]);
+        await Promise.all([
+            this.spill(other, tubeA, spillCount),
+            other.fill(this, tubeB, spillCount),
+        ]);
     }
 
     async spill(other: Tube, resultColorStr: string, spillCount: number) {
@@ -218,20 +221,18 @@ export class Tube {
         const { x, y } = other.element.getBoundingClientRect();
         const direction = x + TUBE_WIDTH / 2 > window.innerWidth / 2 ? "clockwise" : "anticlock";
 
-        // rotate to angle so tube is ready to start spilling // duration * 1
         let topLiquidIdx = this.getTopLiquid()!.idx;
-        const readyAngle = ROTATION_DATA.ready[topLiquidIdx];
-
         for (const lq of this.liquids) {
             if (topLiquidIdx < 3) {
                 const liquidHeight = HEIGHTS_DATA[topLiquidIdx + 1][lq.idx];
                 lq.setLevel(liquidHeight);
             }
         }
-        console.log({ readyAngle, topLiquidIdx });
+        // rotate to angle so tube is ready to start spilling // duration * 1
+        const readyAngle = ROTATION_DATA.ready[topLiquidIdx];
         await this.rotateTo(direction == "clockwise" ? readyAngle : -readyAngle);
 
-        // rotate towards angle where liquid is fully spilled // duration *  spillCount
+        // rotate towards angle where liquid is fully spilled
         let doneAngle = ROTATION_DATA.done[topLiquidIdx];
         while (spillCount > 0) {
             for (const lq of this.liquids) {
@@ -244,37 +245,43 @@ export class Tube {
             spillCount--;
             doneAngle = ROTATION_DATA.done[topLiquidIdx];
         }
-        this.liquids = remainingLiquids;
+
         // rotate back
+        this.liquids = remainingLiquids;
         for (const lq of this.liquids) {
             lq.setLevel(25);
         }
         await this.rotateTo(0);
-        // console.log({ pouringLiquids, remainingLiquids, direction });
 
-        console.log("spill", { resultColorStr, spillCount, tube: this });
+        console.log("spill", {
+            resultColorStr,
+            spillCount,
+            tube: this,
+            pouringLiquids,
+            remainingLiquids,
+        });
     }
-    async fill(resultColorStr: string, spillCount: number) {
+    async fill(other: Tube, resultColorStr: string, spillCount: number) {
         this.colorStr = resultColorStr;
 
-        const { pouringLiquids, remainingLiquids } = this.parsePouringLiquids(spillCount);
-        console.log({ pouringLiquids, remainingLiquids });
-
         // wait for other to reach spilling position // duration * 1
+        await wait(duration * 1000);
 
         // spawn new liquids and increase their height // duration *  spillCount
+        let otherTop = other.getTopLiquid()!;
+        let topLiquid = this.getTopLiquid();
+        let topLiquidIdx = topLiquid?.idx ?? 0;
+
+        while (spillCount > 0) {
+            console.log({ topLiquid, otherTop });
+            const newLiq = new Liquid(otherTop.color, topLiquidIdx++, 0);
+
+            this.liquids.push(newLiq);
+            this.element.append(newLiq.element);
+            await newLiq.setLevel(25);
+            spillCount--;
+        }
+
         console.log("fill", { resultColorStr, spillCount, tube: this });
-    }
-
-    getZeroHeightLiquids() {
-        const zeroHeightEles: HTMLDivElement[] = [];
-        [...this.element.children].forEach((ele) => {
-            const height = ele.computedStyleMap().get("height")?.toString();
-
-            if (height && parseInt(height) == 0) {
-                zeroHeightEles.push(ele as HTMLDivElement);
-            }
-        });
-        return zeroHeightEles;
     }
 }
