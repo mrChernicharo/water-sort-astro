@@ -27,19 +27,16 @@ export class Liquid {
         const liquidEle = document.createElement("div");
 
         liquidEle.classList.add("liquid");
-        liquidEle.classList.add(`liquid-${this.idx}`);
 
         liquidEle.dataset.idx = String(this.idx);
         liquidEle.dataset.color = String(cssColor);
 
-        // liquidEle.style.backgroundColor = cssColor;
+        liquidEle.style.zIndex = String(5 - this.idx);
         liquidEle.style.height = `${this.level}%`;
 
-        ["left"].forEach((side) => {
-            // ["left", "right"].forEach((side) => {
+        ["left", "right"].forEach((side) => {
             const marker = document.createElement("div");
             marker.classList.add("marker");
-            marker.classList.add(`marker-${side}`);
 
             const layer = document.createElement("div");
             layer.classList.add("layer");
@@ -67,6 +64,16 @@ export class Liquid {
             });
         });
     }
+
+    getMarkers() {
+        const markers: HTMLDivElement[] = [];
+        [...this.element.children]
+            .filter((el) => el.classList.contains("marker"))
+            .forEach((marker) => {
+                markers.push(marker as HTMLDivElement);
+            });
+        return markers;
+    }
 }
 
 export class Tube {
@@ -78,12 +85,15 @@ export class Tube {
 
     constructor(colorStr: string, idx: number) {
         this.idx = idx;
-
         this.colorStr = colorStr;
 
-        for (let i = 3; i >= 0; i--) {
-            this.liquids.push(new Liquid(colorStr[i], i));
+        for (let i = 0; i < 4; i++) {
+            // for (let i = 3; i >= 0; i--) {
+            if (colorStr[i] !== "_") {
+                this.liquids.push(new Liquid(colorStr[i], i));
+            }
         }
+
         this.element = this.#createElement();
     }
 
@@ -118,15 +128,18 @@ export class Tube {
         return this.liquids.filter((lq) => lq.color != "_").length == 4;
     }
     getTopLiquid() {
-        return this.liquids.filter((lq) => lq.color != "_")[0];
+        return this.liquids.filter((lq) => lq.color != "_").at(-1);
     }
     getLiquidByIdx(idx: number) {
         const liquidIdx = this.liquids.findIndex((lq) => lq.idx == idx);
         return this.liquids[liquidIdx];
     }
+
     getTopColor() {
         let topColor = null;
-        for (let i = 0; i < 4; i++) {
+        for (let i = 3; i >= 0; i--) {
+            // for (let i = 0; i < 4; i++) {
+            if (!this.liquids[i]) continue;
             const color = this.liquids[i].color;
             if (color == "_") continue;
             else {
@@ -167,17 +180,10 @@ export class Tube {
     async rotateTo(angle: number) {
         return new Promise((resolve) => {
             this.liquids.forEach((lq) => {
-                const markers = [...lq.element.children].filter((el) =>
-                    el.classList.contains("marker")
-                );
-
-                markers.forEach((marker) => {
+                lq.getMarkers().forEach((marker) => {
                     gsap.to(marker, { rotate: `${-angle}deg`, duration });
                 });
             });
-
-            console.log("rotate", { angle });
-
             gsap.to(this.element, { rotate: `${angle}deg`, duration }).then(() => {
                 resolve(true);
             });
@@ -190,88 +196,90 @@ export class Tube {
         const result = performWaterSpill(this.colorStr, other.colorStr);
         const { tubeA, tubeB } = result;
 
-        await Promise.all([this.drain(tubeA, spillCount), other.fill(tubeB, spillCount)]);
+        await Promise.all([this.spill(tubeA, spillCount), other.fill(tubeB, spillCount)]);
     }
-    async drain(resultColorStr: string, spillCount: number) {
-        this.colorStr = resultColorStr;
 
-        const { emptySpaces, pouringLiquids, remainingLiquids } =
-            this.parsePouringLiquids(spillCount);
+    async spill(resultColorStr: string, spillCount: number) {
+        // this.colorStr = resultColorStr;
 
-        // drain empty
-        if (remainingLiquids.length) {
-            emptySpaces.forEach((lq) => lq.setLevel(0));
-        }
-        this.rotateTo(75);
+        //     const { emptySpaces, pouringLiquids, remainingLiquids } =
+        //         this.parsePouringLiquids(spillCount);
 
-        for (const [i, lq] of pouringLiquids.entries()) {
-            const newEmptyLiquid = new Liquid("_", lq.idx, 0);
+        //     // drain empty
+        //     if (remainingLiquids.length) {
+        //         emptySpaces.forEach((lq) => lq.setLevel(0));
+        //     }
 
-            // otherwise filled tubes will drain upwards
-            if (i == 3 && pouringLiquids.length == 4) {
-                newEmptyLiquid.setLevel(100);
-            }
+        //     for (const [i, lq] of pouringLiquids.entries()) {
+        //         const newEmptyLiquid = new Liquid("_", lq.idx, 0);
 
-            lq.element.insertAdjacentElement("beforebegin", newEmptyLiquid.element);
-            lq.element.classList.add("old");
-            await lq.setLevel(0);
-            lq.color = newEmptyLiquid.color;
-            lq.element = newEmptyLiquid.element;
-        }
+        //         // otherwise filled tubes will drain upwards
+        //         if (i == 3 && pouringLiquids.length == 4) {
+        //             newEmptyLiquid.setLevel(100);
+        //         }
 
-        if (remainingLiquids.length) {
-            remainingLiquids.forEach((lq) => lq.setLevel(100 / remainingLiquids.length));
-        } else {
-            // enlarge one of the empty to push below the pouring liquid
-            if (emptySpaces[0]) emptySpaces[0].setLevel(100);
-        }
+        //         lq.element.insertAdjacentElement("beforebegin", newEmptyLiquid.element);
+        //         lq.element.classList.add("old");
+        //         await lq.setLevel(0);
+        //         lq.color = newEmptyLiquid.color;
+        //         lq.element = newEmptyLiquid.element;
+        //     }
 
-        await wait(duration * 1000);
-        this.rotateTo(0);
+        //     if (remainingLiquids.length) {
+        //         remainingLiquids.forEach((lq) => lq.setLevel(100 / remainingLiquids.length));
+        //     } else {
+        //         // enlarge one of the empty to push below the pouring liquid
+        //         if (emptySpaces[0]) emptySpaces[0].setLevel(100);
+        //     }
 
-        // scale back
-        console.log("Time to scale back", this.liquids);
-        this.liquids.forEach((lq) => lq.setLevel(25));
+        //     await wait(duration * 1000);
 
-        [...this.element.children].forEach((child) => {
-            // console.log(child);
-            if (child.classList.contains("old")) {
-                child.remove();
-            }
-        });
-        console.log("drain", this);
+        //     // scale back
+        //     console.log("Time to scale back", this.liquids);
+        //     this.liquids.forEach((lq) => lq.setLevel(25));
+
+        //     [...this.element.children].forEach((child) => {
+        //         // console.log(child);
+        //         if (child.classList.contains("old")) {
+        //             child.remove();
+        //         }
+        //     });
+
+        await this.rotateTo(75);
+        await this.rotateTo(0);
+        console.log("spill", { resultColorStr, spillCount, tube: this });
     }
     async fill(resultColorStr: string, spillCount: number) {
-        const topLiquid = this.getTopLiquid();
-        const color = resultColorStr.replaceAll("_", "").at(-1) || "_";
+        // const topLiquid = this.getTopLiquid();
+        // const color = resultColorStr.replaceAll("_", "").at(-1) || "_";
 
-        let liquidIdx = 0;
-        if (topLiquid) {
-            liquidIdx = topLiquid.idx + 1;
-        }
+        // let liquidIdx = 0;
+        // if (topLiquid) {
+        //     liquidIdx = topLiquid.idx + 1;
+        // }
 
-        while (spillCount > 0) {
-            this.colorStr = resultColorStr;
+        // while (spillCount > 0) {
+        //     this.colorStr = resultColorStr;
 
-            const liquid = this.getLiquidByIdx(liquidIdx);
+        //     const liquid = this.getLiquidByIdx(liquidIdx);
 
-            const fillLiquid = new Liquid(color, liquidIdx, 0);
+        //     const fillLiquid = new Liquid(color, liquidIdx, 0);
 
-            liquid.element.insertAdjacentElement("afterend", fillLiquid.element);
+        //     liquid.element.insertAdjacentElement("afterend", fillLiquid.element);
 
-            fillLiquid.setLevel(25);
-            await liquid.setLevel(0);
+        //     fillLiquid.setLevel(25);
+        //     await liquid.setLevel(0);
 
-            liquid.color = fillLiquid.color;
-            liquid.level = fillLiquid.level;
-            liquid.element = fillLiquid.element;
+        //     liquid.color = fillLiquid.color;
+        //     liquid.level = fillLiquid.level;
+        //     liquid.element = fillLiquid.element;
 
-            spillCount--;
-            liquidIdx++;
-        }
+        //     spillCount--;
+        //     liquidIdx++;
+        // }
 
-        this.#clearTemporaryElements();
-        // console.log("fill", this);
+        // this.#clearTemporaryElements();
+        console.log("fill", { resultColorStr, spillCount, tube: this });
     }
 
     getZeroHeightLiquids() {

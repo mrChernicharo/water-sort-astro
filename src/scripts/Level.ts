@@ -39,7 +39,7 @@ export class Level {
     canPour(tubeA: Tube, tubeB: Tube) {
         const fromColor = tubeA.getTopColor();
         const toColor = tubeB.getTopColor();
-        // console.log("canPour", { tubeA, fromColor, tubeB, toColor });
+        console.log("canPour", { tubeA, fromColor, tubeB, toColor });
         if (fromColor == null) return false;
         if (fromColor && toColor == null) return true;
         else return fromColor == toColor && !tubeB.isComplete();
