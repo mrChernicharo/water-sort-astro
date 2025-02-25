@@ -188,10 +188,10 @@ export class Tube {
                             marker.style.visibility = "visible";
                         }
                     }
-                    gsap.to(marker, { rotate: `${-angle}deg`, duration, ease: "linear" });
+                    gsap.to(marker, { rotate: `${-angle}deg`, duration, ease: "ease" });
                 });
             });
-            gsap.to(this.element, { rotate: `${angle}deg`, duration }).then(() => {
+            gsap.to(this.element, { rotate: `${angle}deg`, duration, ease: "ease" }).then(() => {
                 resolve(true);
             });
         });
@@ -224,7 +224,8 @@ export class Tube {
 
         for (const lq of this.liquids) {
             if (topLiquidIdx < 3) {
-                lq.setLevel(HEIGHTS_DATA[topLiquidIdx + 1][lq.idx]);
+                const liquidHeight = HEIGHTS_DATA[topLiquidIdx + 1][lq.idx];
+                lq.setLevel(liquidHeight);
             }
         }
         console.log({ readyAngle, topLiquidIdx });
@@ -233,19 +234,24 @@ export class Tube {
         // rotate towards angle where liquid is fully spilled // duration *  spillCount
         let doneAngle = ROTATION_DATA.done[topLiquidIdx];
         while (spillCount > 0) {
-            // console.log({ doneAngle, topLiquidIdx });
+            for (const lq of this.liquids) {
+                const liquidHeight = HEIGHTS_DATA[topLiquidIdx][lq.idx];
+                lq.setLevel(liquidHeight);
+            }
             await this.rotateTo(direction == "clockwise" ? doneAngle : -doneAngle);
 
             topLiquidIdx--;
             spillCount--;
             doneAngle = ROTATION_DATA.done[topLiquidIdx];
         }
-
+        this.liquids = remainingLiquids;
         // rotate back
+        for (const lq of this.liquids) {
+            lq.setLevel(25);
+        }
         await this.rotateTo(0);
         // console.log({ pouringLiquids, remainingLiquids, direction });
 
-        this.liquids = remainingLiquids;
         console.log("spill", { resultColorStr, spillCount, tube: this });
     }
     async fill(resultColorStr: string, spillCount: number) {
