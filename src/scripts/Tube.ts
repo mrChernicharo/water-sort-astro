@@ -3,77 +3,7 @@ import { duration, COLORS, HEIGHTS_DATA, ROTATION_DATA, TUBE_WIDTH, type Color }
 import { parseMap, wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
 import { cloneDeep } from "lodash";
-
-export class Liquid {
-    color: string;
-    idx: number;
-    level: number;
-    element: HTMLDivElement;
-
-    constructor(color: string, idx: number, level = 25) {
-        this.color = color;
-        this.idx = idx;
-        this.level = level;
-
-        this.element = this.#createElement();
-        return this;
-    }
-
-    #createElement() {
-        const cssColor = COLORS[this.color as Color];
-
-        const liquidEle = document.createElement("div");
-
-        liquidEle.classList.add("liquid");
-
-        liquidEle.dataset.idx = String(this.idx);
-        liquidEle.dataset.color = String(cssColor);
-
-        liquidEle.style.zIndex = String(5 - this.idx);
-        liquidEle.style.height = `${this.level}%`;
-
-        ["left", "right"].forEach((side) => {
-            const marker = document.createElement("div");
-            marker.classList.add("marker");
-            marker.dataset["side"] = side;
-
-            const layer = document.createElement("div");
-            layer.classList.add("layer");
-            layer.classList.add(cssColor);
-
-            layer.style.backgroundColor = cssColor;
-
-            marker.append(layer);
-            liquidEle.append(marker);
-        });
-        return liquidEle;
-    }
-
-    async setLevel(level: number) {
-        return new Promise((resolve) => {
-            const prevLevel = this.level;
-            this.element.style.height = `${level}%`;
-            this.level = level;
-            gsap.fromTo(
-                this.element,
-                { height: `${prevLevel}%` },
-                { height: `${level}%`, duration }
-            ).then(() => {
-                resolve(true);
-            });
-        });
-    }
-
-    getMarkers() {
-        const markers: HTMLDivElement[] = [];
-        [...this.element.children]
-            .filter((el) => el.classList.contains("marker"))
-            .forEach((marker) => {
-                markers.push(marker as HTMLDivElement);
-            });
-        return markers;
-    }
-}
+import { Liquid } from "./Liquid";
 
 export class Tube {
     idx: number;
@@ -105,7 +35,7 @@ export class Tube {
 
         const topAnchorEle = document.createElement("div");
         topAnchorEle.classList.add("top-anchor");
-        topAnchorEle.classList.add(`top-anchor-${this.idx}`);
+        topAnchorEle.dataset.idx = String(this.idx);
 
         tubeEle.append(topAnchorEle);
 
@@ -127,7 +57,7 @@ export class Tube {
         return this.liquids.filter((lq) => lq.color != "_").length == 4;
     }
     getTopLiquid() {
-        return this.liquids.filter((lq) => lq.color != "_").at(-1);
+        return this.liquids.at(-1);
     }
     getLiquidByIdx(idx: number) {
         const liquidIdx = this.liquids.findIndex((lq) => lq.idx == idx);
@@ -147,6 +77,9 @@ export class Tube {
             }
         }
         return topColor;
+    }
+    getAnchor() {
+        return this.element.querySelector(".top-anchor");
     }
 
     parsePouringLiquids(spillCount: number) {
@@ -212,14 +145,19 @@ export class Tube {
     async spill(other: Tube, resultColorStr: string, spillCount: number) {
         this.colorStr = resultColorStr;
 
-        const { pouringLiquids, remainingLiquids } = this.parsePouringLiquids(spillCount);
+        const { remainingLiquids } = this.parsePouringLiquids(spillCount);
 
         // move towards other
-        // gsap.to(this.element, { x, y });
-
+        const { x: ox, y: oy } = other.getAnchor()!.getBoundingClientRect();
+        const { x: tx, y: ty } = this.getAnchor()!.getBoundingClientRect();
         // should i rotate left or right?
-        const { x, y } = other.element.getBoundingClientRect();
-        const direction = x + TUBE_WIDTH / 2 > window.innerWidth / 2 ? "clockwise" : "anticlock";
+        const direction = ox + TUBE_WIDTH / 2 > window.innerWidth / 2 ? "clockwise" : "anticlock";
+
+        this.element.style.transformOrigin = direction == "clockwise" ? "top right" : "top left";
+
+        const dx = ox - tx;
+        const dy = oy - ty - 60;
+        gsap.to(this.element, { x: dx + (direction == "clockwise" ? -20 : 20), y: dy });
 
         let topLiquidIdx = this.getTopLiquid()!.idx;
         for (const lq of this.liquids) {
@@ -233,12 +171,15 @@ export class Tube {
         await this.rotateTo(direction == "clockwise" ? readyAngle : -readyAngle);
 
         // rotate towards angle where liquid is fully spilled
+        const removingLiquids: Liquid[] = [];
         let doneAngle = ROTATION_DATA.done[topLiquidIdx];
         while (spillCount > 0) {
             for (const lq of this.liquids) {
                 const liquidHeight = HEIGHTS_DATA[topLiquidIdx][lq.idx];
+                if (liquidHeight == 0) removingLiquids.push(lq);
                 lq.setLevel(liquidHeight);
             }
+
             await this.rotateTo(direction == "clockwise" ? doneAngle : -doneAngle);
 
             topLiquidIdx--;
@@ -247,19 +188,24 @@ export class Tube {
         }
 
         // rotate back
-        this.liquids = remainingLiquids;
+        removingLiquids.forEach((lq) => {
+            lq.element.remove();
+        });
+        this.liquids = remainingLiquids.sort((a, b) => a.idx - b.idx);
+
         for (const lq of this.liquids) {
             lq.setLevel(25);
         }
+        gsap.to(this.element, { x: 0, y: 0 });
         await this.rotateTo(0);
 
-        console.log("spill", {
-            resultColorStr,
-            spillCount,
-            tube: this,
-            pouringLiquids,
-            remainingLiquids,
-        });
+        // console.log("spill", {
+        //     resultColorStr,
+        //     spillCount,
+        //     tube: this,
+        //     pouringLiquids,
+        //     remainingLiquids,
+        // });
     }
     async fill(other: Tube, resultColorStr: string, spillCount: number) {
         this.colorStr = resultColorStr;
@@ -270,11 +216,12 @@ export class Tube {
         // spawn new liquids and increase their height // duration *  spillCount
         let otherTop = other.getTopLiquid()!;
         let topLiquid = this.getTopLiquid();
-        let topLiquidIdx = topLiquid?.idx ?? 0;
+        let topLiquidIdx = this.liquids.length;
 
         while (spillCount > 0) {
-            console.log({ topLiquid, otherTop });
-            const newLiq = new Liquid(otherTop.color, topLiquidIdx++, 0);
+            console.log({ topLiquid, otherTop, topLiquidIdx });
+            const newLiq = new Liquid(otherTop.color, topLiquidIdx, 0);
+            topLiquidIdx++;
 
             this.liquids.push(newLiq);
             this.element.append(newLiq.element);
@@ -282,6 +229,6 @@ export class Tube {
             spillCount--;
         }
 
-        console.log("fill", { resultColorStr, spillCount, tube: this });
+        // console.log("fill", { resultColorStr, spillCount, tube: this });
     }
 }
