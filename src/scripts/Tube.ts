@@ -1,10 +1,8 @@
 import gsap from "gsap";
-import { COLORS, HEIGHTS_DATA, ROTATION_DATA, TUBE_WIDTH, type Color } from "./constants";
+import { duration, COLORS, HEIGHTS_DATA, ROTATION_DATA, TUBE_WIDTH, type Color } from "./constants";
 import { parseMap, wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
 import { cloneDeep } from "lodash";
-
-const duration = 1;
 
 export class Liquid {
     color: string;
@@ -37,6 +35,7 @@ export class Liquid {
         ["left", "right"].forEach((side) => {
             const marker = document.createElement("div");
             marker.classList.add("marker");
+            marker.dataset["side"] = side;
 
             const layer = document.createElement("div");
             layer.classList.add("layer");
@@ -176,7 +175,20 @@ export class Tube {
         return new Promise((resolve) => {
             this.liquids.forEach((lq) => {
                 lq.getMarkers().forEach((marker) => {
-                    gsap.to(marker, { rotate: `${-angle}deg`, duration });
+                    if (angle < 0) {
+                        if (marker.dataset["side"] == "left") {
+                            marker.style.visibility = "visible";
+                        } else {
+                            marker.style.visibility = "hidden";
+                        }
+                    } else if (angle > 0) {
+                        if (marker.dataset["side"] == "left") {
+                            marker.style.visibility = "hidden";
+                        } else {
+                            marker.style.visibility = "visible";
+                        }
+                    }
+                    gsap.to(marker, { rotate: `${-angle}deg`, duration, ease: "linear" });
                 });
             });
             gsap.to(this.element, { rotate: `${angle}deg`, duration }).then(() => {
@@ -216,13 +228,14 @@ export class Tube {
             }
         }
         console.log({ readyAngle, topLiquidIdx });
-        await this.rotateTo(readyAngle);
+        await this.rotateTo(direction == "clockwise" ? readyAngle : -readyAngle);
 
         // rotate towards angle where liquid is fully spilled // duration *  spillCount
         let doneAngle = ROTATION_DATA.done[topLiquidIdx];
         while (spillCount > 0) {
-            console.log({ doneAngle, topLiquidIdx });
-            await this.rotateTo(doneAngle);
+            // console.log({ doneAngle, topLiquidIdx });
+            await this.rotateTo(direction == "clockwise" ? doneAngle : -doneAngle);
+
             topLiquidIdx--;
             spillCount--;
             doneAngle = ROTATION_DATA.done[topLiquidIdx];
@@ -230,7 +243,7 @@ export class Tube {
 
         // rotate back
         await this.rotateTo(0);
-        console.log({ pouringLiquids, remainingLiquids, direction });
+        // console.log({ pouringLiquids, remainingLiquids, direction });
 
         this.liquids = remainingLiquids;
         console.log("spill", { resultColorStr, spillCount, tube: this });

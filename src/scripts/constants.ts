@@ -75,3 +75,5 @@ export const ROTATION_DATA: Record<"ready" | "done", Record<number, number>> = {
         0: 91,
     },
 };
+
+export const duration = 1;
