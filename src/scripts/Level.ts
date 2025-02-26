@@ -88,21 +88,13 @@ export class Level {
     }
 
     #onWindowClick(e: MouseEvent) {
-        const composedPath = e.composedPath();
+        const composedPath = e.composedPath() as HTMLElement[];
 
-        const clickedTube = composedPath.find((el) =>
-            (el as HTMLElement)?.classList?.contains("tube")
-        ) as HTMLDivElement;
+        const clickedTube = composedPath.find((el) => el?.classList?.contains("tube"));
+        const clickedGoBackInTimeBtn = composedPath.find((el) => el.id === "go-back-in-time-btn");
+        const clickedBestMoveBtn = composedPath.find((el) => el.id === "best-move-btn");
 
-        const clickedGoBackInTimeBtn = composedPath.find(
-            (el) => (el as HTMLElement).id === "go-back-in-time-btn"
-        ) as HTMLButtonElement;
-
-        const clickedBestMoveBtn = composedPath.find(
-            (el) => (el as HTMLElement).id === "best-move-btn"
-        ) as HTMLButtonElement;
-
-        // console.log(composedPath, clickedTube, clickedGoBackInTimeBtn);
+        // console.log(composedPath, clickedTube, clickedGoBackInTimeBtn, clickedBestMoveBtn);
 
         if (clickedGoBackInTimeBtn) {
             this.goBackInTime();

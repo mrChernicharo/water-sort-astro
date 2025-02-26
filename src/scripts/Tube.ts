@@ -1,5 +1,13 @@
 import gsap from "gsap";
-import { duration, COLORS, HEIGHTS_DATA, ROTATION_DATA, TUBE_WIDTH, type Color } from "./constants";
+import {
+    duration,
+    COLORS,
+    HEIGHTS_DATA,
+    ROTATION_DATA,
+    TUBE_WIDTH,
+    type Color,
+    TUBE_HEIGHT,
+} from "./constants";
 import { parseMap, wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
 import { cloneDeep } from "lodash";
@@ -48,9 +56,11 @@ export class Tube {
 
     select() {
         this.element.classList.add("selected");
+        gsap.to(this.element, { translate: `0px ${-TUBE_HEIGHT / 8}px`, duration: 0.1 });
     }
     deselect() {
         this.element.classList.remove("selected");
+        gsap.to(this.element, { translate: `0px 0px`, duration: 0.1 });
     }
 
     isComplete() {
