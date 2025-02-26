@@ -162,7 +162,13 @@ export class Tube {
             y: dy,
         });
 
-        let topLiquidIdx = this.getTopLiquid()!.idx;
+        const topLiquid = this.getTopLiquid();
+        if (!topLiquid) {
+            console.log("oops");
+            return;
+        }
+
+        let topLiquidIdx = topLiquid.idx;
         for (const lq of this.liquids) {
             if (topLiquidIdx < 3) {
                 const liquidHeight = HEIGHTS_DATA[topLiquidIdx + 1][lq.idx];

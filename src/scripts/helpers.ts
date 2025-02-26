@@ -47,3 +47,12 @@ export function areMapsEqual(m1: string, m2: string) {
 export async function wait(time: number) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
+
+export const isGameSuccessful = (map: string) => {
+    for (const tube of parseMap(map)) {
+        if (uniqueCharacters(tube).length != 1) {
+            return false;
+        }
+    }
+    return true;
+};

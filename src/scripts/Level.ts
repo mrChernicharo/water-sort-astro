@@ -1,5 +1,5 @@
 import { parseMap, wait } from "./helpers";
-import { getMapAfterMove, getSpillCount } from "./old/old";
+import { getBestNextMove, getMapAfterMove, getSpillCount } from "./old/old";
 import { Tube } from "./Tube";
 
 export class Level {
@@ -66,6 +66,27 @@ export class Level {
         console.log(this);
     }
 
+    doBestMove() {
+        const move = getBestNextMove(this.map);
+        console.log("do best move", move);
+        if (!move) {
+            console.log("no best move 😩");
+            return;
+        }
+        const { from, to } = move;
+        const tubeA = this.getTubeByIdx(from);
+        const tubeB = this.getTubeByIdx(to);
+
+        tubeA.pourInto(tubeB);
+        const updatedMap = getMapAfterMove(this.map, { from: tubeA.idx, to: tubeB.idx });
+
+        // @TODO remove setBoard
+        // this.#setBoard(updatedMap);
+        this.history.push(updatedMap);
+        this.map = updatedMap;
+        console.log(this);
+    }
+
     #onWindowClick(e: MouseEvent) {
         const composedPath = e.composedPath();
 
@@ -77,10 +98,18 @@ export class Level {
             (el) => (el as HTMLElement).id === "go-back-in-time-btn"
         ) as HTMLButtonElement;
 
+        const clickedBestMoveBtn = composedPath.find(
+            (el) => (el as HTMLElement).id === "best-move-btn"
+        ) as HTMLButtonElement;
+
         // console.log(composedPath, clickedTube, clickedGoBackInTimeBtn);
 
         if (clickedGoBackInTimeBtn) {
             this.goBackInTime();
+        }
+
+        if (clickedBestMoveBtn) {
+            this.doBestMove();
         }
 
         if (clickedTube) {
