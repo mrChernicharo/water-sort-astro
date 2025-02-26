@@ -1,26 +1,26 @@
 [
     {
-        "name": "Level 0",
+        "name": "Level 1",
         "board": "bgg_ brr_ gb__ rr__ g___ b___"
     },
     {
-        "name": "Level 1",
+        "name": "Level 2",
         "board": "bb__ gb__ g___ ggb_"
     },
     {
-        "name": "Level 2",
+        "name": "Level 3",
         "board": "bb__ gb__ g___ ggb_ rr__ rr__"
     },
     {
-        "name": "Level 3",
+        "name": "Level 4",
         "board": "ewwe gtrr urgu brtu gbgz zubt ztbz ewew ____ ____"
     },
     {
-        "name": "Level 4",
+        "name": "Level 5",
         "board": "ejew gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp ____ ____"
     },
     {
-        "name": "Level 5",
-        "board": "bgg_ ____"
+        "name": "Level 6",
+        "board": "bgg_ bgb_ bg__ ____"
     }
 ]

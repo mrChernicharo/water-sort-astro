@@ -3,9 +3,8 @@ import json from "../../data/levels.json";
 
 const path = Astro.url.pathname;
 const levelIdx = Number(path.split("/").at(-2));
-const levelNumber = levelIdx + 1;
-
-const levelData = json[levelIdx];
+const levelNumber = levelIdx;
+const levelData = json[levelIdx - 1];
 ---
 
 <style is:global>

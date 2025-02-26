@@ -157,7 +157,10 @@ export class Tube {
 
         const dx = ox - tx;
         const dy = oy - ty - 60;
-        gsap.to(this.element, { x: dx + (direction == "clockwise" ? -20 : 20), y: dy });
+        gsap.to(this.element, {
+            x: dx + (direction == "clockwise" ? -TUBE_WIDTH / 2 : TUBE_WIDTH / 2),
+            y: dy,
+        });
 
         let topLiquidIdx = this.getTopLiquid()!.idx;
         for (const lq of this.liquids) {

@@ -1,73 +1,58 @@
 ---
-const levels = [
-  {
-    name: "Level 1",
-    board: "bb__ gb__ g___ ggb_",
-    // image: '/images/level1.jpg',
-  },
-  {
-    name: "Level 2",
-    board: "bb__ gb__ g___ ggb_ rr__ rr__",
-    // image: '/images/level2.jpg',
-  },
-  {
-    name: "Level 3",
-    board: "ewwe gtrr urgu brtu gbgz zubt ztbz ewew ____ ____",
-    // image: '/images/level3.jpg',
-  },
-  {
-    name: "Level 4",
-    board: "ejew gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp ____ ____",
-    // image: '/images/level3.jpg',
-  },
-];
+import levels from "../data/levels.json";
 ---
 
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Astro</title>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
+        <title>Astro</title>
 
-    <style is:global>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        font-family: "Benton Sans", sans-serif;
-      }
-      #canvas-container {
-        border: 1px solid red;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 32px;
-        padding: 32px;
-      }
-      .tube {
-        height: 200px;
-        width: 50px;
-        border: 1px solid black;
+        <style is:global>
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                font-family: "Benton Sans", sans-serif;
+            }
+            #canvas-container {
+                border: 1px solid red;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 32px;
+                padding: 32px;
+            }
+            .tube {
+                height: 200px;
+                width: 50px;
+                border: 1px solid black;
 
-        &.selected {
-          box-shadow: 0px 0px 14px rgb(31, 152, 192);
-        }
-      }
-      .water {
-        height: 50px;
-        width: 50px;
-        border: 1px solid black;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Water Sort</h1>
+                &.selected {
+                    box-shadow: 0px 0px 14px rgb(31, 152, 192);
+                }
+            }
+            .water {
+                height: 50px;
+                width: 50px;
+                border: 1px solid black;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Water Sort</h1>
 
-    {
-      levels.map((level, idx) => {
-        return <a href={`/levels/${idx}/`}>{level.name}</a>;
-      })
-    }
-  </body>
+        <ul>
+            {
+                levels.map((level, idx) => {
+                    return (
+                        <li>
+                            <a href={`/levels/${idx + 1}/`}>{level.name}</a>
+                        </li>
+                    );
+                })
+            }
+        </ul>
+    </body>
 </html>
