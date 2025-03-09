@@ -25,6 +25,7 @@ export class Liquid {
 
         liquidEle.dataset.idx = String(this.idx);
         liquidEle.dataset.color = String(cssColor);
+        // liquidEle.textContent = this.color; // <-- debug only
 
         liquidEle.style.zIndex = String(5 - this.idx);
         liquidEle.style.height = `${this.level}%`;

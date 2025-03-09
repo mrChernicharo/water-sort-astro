@@ -1,21 +1,21 @@
 export const COLORS = {
     a: "aqua",
-    b: "dodgerBlue",
-    c: "cyan",
-    d: "darkblue",
-    e: "DarkTurquoise", // emerald
+    b: "cornflowerBlue",
+    c: "lightBlue",
+    d: "goldenRod",
+    e: "DarkTurquoise",
     f: "fuchsia",
     g: "lightGreen",
     h: "hotpink",
     i: "indigo",
-    j: "jade",
+    j: "slateBlue",
     k: "khaki",
-    l: "lavender",
+    l: "lightSeaGreen",
     m: "mediumOrchid",
-    n: "navy",
+    n: "mediumSeaGreen",
     o: "orange",
     p: "purple",
-    q: "royalBlue",
+    q: "salmon",
     r: "red",
     s: "silver",
     t: "teal",
@@ -25,7 +25,6 @@ export const COLORS = {
     x: "indianRed",
     y: "yellow",
     z: "pink",
-    _: "transparent",
 };
 
 export type Color = keyof typeof COLORS;

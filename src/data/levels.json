@@ -17,10 +17,14 @@
     },
     {
         "name": "Level 5",
-        "board": "ejew gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp ____ ____"
+        "board": "gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp ejew ____ ____"
     },
     {
         "name": "Level 6",
-        "board": "bgg_ bgb_ bg__ ____"
+        "board": "abcd efgh hgfe dcba hafb gced edhc afbg ____ ____"
+    },
+    {
+        "name": "Level 7",
+        "board": "abcd ejg_ lt__ no__ xqrs vhzf ykw_ umpi__ ____"
     }
 ]

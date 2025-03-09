@@ -1,5 +1,5 @@
 import { parseMap, wait } from "./helpers";
-import { getBestNextMove, getMapAfterMove, getSpillCount } from "./old/old";
+import { getBestNextMove, getMapAfterMove, getSpillCount, isMapValid } from "./old/old";
 import { Tube } from "./Tube";
 
 export class Level {
@@ -10,6 +10,10 @@ export class Level {
     element: HTMLDivElement;
 
     constructor(map: string) {
+        if (!isMapValid(map)) {
+            console.error("invalid map!!!!");
+        }
+
         this.map = map;
         this.history = [map];
         this.element = document.querySelector("#board") as HTMLDivElement;

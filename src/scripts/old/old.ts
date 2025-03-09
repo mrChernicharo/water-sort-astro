@@ -6,636 +6,681 @@ const MAX_DEPTH = 5;
 type INode = { map: string; children: INode[]; path: string[] };
 
 const isTubeFull = (tube: string) => {
-  return tube.replace(/_/g, "").length === 4;
+    return tube.replace(/_/g, "").length === 4;
 };
 const isTubeEmpty = (tube: string) => {
-  return tube.replace(/_/g, "").length === 0;
+    return tube.replace(/_/g, "").length === 0;
 };
 
-const isMapValid = (map: string) => {
-  const memory: Record<string, number> = {};
+export const isMapValid = (map: string) => {
+    const memory: Record<string, number> = {};
 
-  for (let i = 0; i < map.length; i++) {
-    if (["_", " "].includes(map[i])) continue;
+    for (let i = 0; i < map.length; i++) {
+        if (["_", " "].includes(map[i])) continue;
 
-    if (!memory[map[i]]) {
-      memory[map[i]] = 1;
-    } else {
-      memory[map[i]]++;
+        if (!memory[map[i]]) {
+            memory[map[i]] = 1;
+        } else {
+            memory[map[i]]++;
+        }
     }
-  }
 
-  for (const color in memory) {
-    if (memory[color] != 4) return false;
-  }
-  return true;
+    for (const color in memory) {
+        if (memory[color] != 4) return false;
+    }
+    return true;
 };
 
 const isGameSuccessful = (map: string) => {
-  for (const tube of parseMap(map)) {
-    if (uniqueCharacters(tube).length != 1) {
-      return false;
+    for (const tube of parseMap(map)) {
+        if (uniqueCharacters(tube).length != 1) {
+            return false;
+        }
     }
-  }
-  return true;
+    return true;
 };
 
 export const isCycling = (path: string[]) => {
-  for (let i = path.length; i >= 0; i--) {
-    if (i < path.length - 5) break;
+    for (let i = path.length; i >= 0; i--) {
+        if (i < path.length - 5) break;
 
-    let move = path[i];
-    let prevMove = path[i - 1] || null;
-    let prevPrevMove = path[i - 2] || null;
-    let prevPrevPrevMove = path[i - 3] || null;
+        let move = path[i];
+        let prevMove = path[i - 1] || null;
+        let prevPrevMove = path[i - 2] || null;
+        let prevPrevPrevMove = path[i - 3] || null;
 
-    if (prevMove) {
-      const reversedPrevMove = prevMove[2] + "-" + prevMove[0];
-      if (move === reversedPrevMove) return true;
+        if (prevMove) {
+            const reversedPrevMove = prevMove[2] + "-" + prevMove[0];
+            if (move === reversedPrevMove) return true;
+        }
+
+        if (move === prevPrevMove) {
+            return true;
+        }
+
+        // if (move === path[i - 4] && prevMove === path[i - 5]) {
+        //   return true;
+        // }
     }
-
-    if (move === prevPrevMove) {
-      return true;
-    }
-
-    // if (move === path[i - 4] && prevMove === path[i - 5]) {
-    //   return true;
-    // }
-  }
-  return false;
+    return false;
 };
 
 const getTubesByIdx = (map: string, indices: number[]) => {
-  const result: Record<number, string> = {};
-  for (const index of indices) {
-    let start = index * 4 + index;
-    let end = start + 4;
-    result[index] = map.slice(start, end);
-  }
-  return result;
+    const result: Record<number, string> = {};
+    for (const index of indices) {
+        let start = index * 4 + index;
+        let end = start + 4;
+        result[index] = map.slice(start, end);
+    }
+    return result;
 };
 
 export function getSpillCount(tubeA: string, tubeB: string) {
-  const targetColor = tubeB.replace(/_/g, "").at(-1) ?? "_";
+    const targetColor = tubeB.replace(/_/g, "").at(-1) ?? "_";
 
-  let currColorA = null;
-  let ASpillPotential = 0;
-  for (let i = 0; i < tubeA.length; i++) {
-    const ch = tubeA[i];
-    // console.log(ch, targetColor);
-    if (ch == "_") continue;
+    let currColorA = null;
+    let ASpillPotential = 0;
+    for (let i = 0; i < tubeA.length; i++) {
+        const ch = tubeA[i];
+        // console.log(ch, targetColor);
+        if (ch == "_") continue;
 
-    if (ch == targetColor || targetColor == "_") {
-      if (ch != currColorA) {
-        currColorA = ch;
-        ASpillPotential = 1;
-      } else {
-        ASpillPotential++;
-      }
-    } else {
-      ASpillPotential = 0;
+        if (ch == targetColor || targetColor == "_") {
+            if (ch != currColorA) {
+                currColorA = ch;
+                ASpillPotential = 1;
+            } else {
+                ASpillPotential++;
+            }
+        } else {
+            ASpillPotential = 0;
+        }
     }
-  }
 
-  let BCapacity = 0;
-  for (let i = 0; i < tubeB.length; i++) {
-    const ch = tubeB[i];
-    if (ch == "_") {
-      BCapacity++;
+    let BCapacity = 0;
+    for (let i = 0; i < tubeB.length; i++) {
+        const ch = tubeB[i];
+        if (ch == "_") {
+            BCapacity++;
+        }
     }
-  }
 
-  const spillCount = Math.min(ASpillPotential, BCapacity);
-  //   console.log("A", tubeA, { ASpillPotential });
-  //   console.log("B", tubeB, { BCapacity, targetColor, spillCount });
-  //   console.log("-------------------------------------");
+    const spillCount = Math.min(ASpillPotential, BCapacity);
+    //   console.log("A", tubeA, { ASpillPotential });
+    //   console.log("B", tubeB, { BCapacity, targetColor, spillCount });
+    //   console.log("-------------------------------------");
 
-  return spillCount;
+    return spillCount;
 }
 
 export function performWaterSpill(tubeA: string, tubeB: string) {
-  const targetColor = tubeA.replace(/_/g, "").at(-1) ?? "_";
-  const spillCount = getSpillCount(tubeA, tubeB);
+    const targetColor = tubeA.replace(/_/g, "").at(-1) ?? "_";
+    const spillCount = getSpillCount(tubeA, tubeB);
 
-  //   console.log("==========================");
-  //   console.log("A", tubeA);
-  //   console.log("B", tubeB, "\n", { spillCount });
-  //   console.log("B", tubeB, "\n", { spillCount });
+    //   console.log("==========================");
+    //   console.log("A", tubeA);
+    //   console.log("B", tubeB, "\n", { spillCount });
+    //   console.log("B", tubeB, "\n", { spillCount });
 
-  //   console.log({ tubeA, tubeB, spillCount });
+    //   console.log({ tubeA, tubeB, spillCount });
 
-  const arrA = [];
-  let removeCount = spillCount;
-  for (let i = 3; i >= 0; i--) {
-    const color = tubeA[i];
-    arrA[i] = color;
-    if (color != "_" && removeCount > 0) {
-      removeCount--;
-      arrA[i] = "_";
+    const arrA = [];
+    let removeCount = spillCount;
+    for (let i = 3; i >= 0; i--) {
+        const color = tubeA[i];
+        arrA[i] = color;
+        if (color != "_" && removeCount > 0) {
+            removeCount--;
+            arrA[i] = "_";
+        }
     }
-  }
 
-  const arrB = [];
-  let insertCount = spillCount;
-  for (let i = 0; i < 4; i++) {
-    const color = tubeB[i];
-    arrB.push(color);
+    const arrB = [];
+    let insertCount = spillCount;
+    for (let i = 0; i < 4; i++) {
+        const color = tubeB[i];
+        arrB.push(color);
 
-    if (color == "_" && insertCount > 0) {
-      insertCount--;
-      arrB[i] = targetColor;
+        if (color == "_" && insertCount > 0) {
+            insertCount--;
+            arrB[i] = targetColor;
+        }
     }
-  }
 
-  tubeA = arrA.join("");
-  tubeB = arrB.join("");
+    tubeA = arrA.join("");
+    tubeB = arrB.join("");
 
-  //   console.log("A", tubeA, "->", "B", tubeB);
-  return { tubeA, tubeB };
+    //   console.log("A", tubeA, "->", "B", tubeB);
+    return { tubeA, tubeB };
 }
 
 export function getMapAfterMove(map: string, move: GameMove) {
-  const tubes = getTubesByIdx(map, [move.from, move.to]);
-  const tA = tubes[move.from];
-  const tB = tubes[move.to];
+    const tubes = getTubesByIdx(map, [move.from, move.to]);
+    const tA = tubes[move.from];
+    const tB = tubes[move.to];
 
-  const { tubeA, tubeB } = performWaterSpill(tA, tB);
+    const { tubeA, tubeB } = performWaterSpill(tA, tB);
 
-  for (const [i, index] of [move.from, move.to].entries()) {
-    let start = index * 4 + index;
-    const tube = i == 0 ? tubeA : tubeB;
-    map = spliceString(map, start, 4, tube);
-  }
+    for (const [i, index] of [move.from, move.to].entries()) {
+        let start = index * 4 + index;
+        const tube = i == 0 ? tubeA : tubeB;
+        map = spliceString(map, start, 4, tube);
+    }
 
-  return map;
+    return map;
 }
 
 export function checkAvailableMoves(map: string) {
-  const availableMoves: GameMove[] = [];
+    const availableMoves: GameMove[] = [];
 
-  const tubes = parseMap(map);
+    const tubes = parseMap(map);
 
-  for (let i = 0; i < tubes.length; i++) {
-    const tubeA = tubes[i];
+    for (let i = 0; i < tubes.length; i++) {
+        const tubeA = tubes[i];
 
-    let j = 0;
-    while (j < tubes.length) {
-      if (i != j) {
-        const tubeB = tubes[j];
-        const spillCount = getSpillCount(tubeA, tubeB);
+        let j = 0;
+        while (j < tubes.length) {
+            if (i != j) {
+                const tubeB = tubes[j];
+                const spillCount = getSpillCount(tubeA, tubeB);
 
-        if (spillCount > 0) {
-          //   console.log("act", { i, j, tubeA, tubeB, spillCount });
-          availableMoves.push({ from: i, to: j });
+                if (spillCount > 0) {
+                    //   console.log("act", { i, j, tubeA, tubeB, spillCount });
+                    availableMoves.push({ from: i, to: j });
+                }
+            }
+            j++;
         }
-      }
-      j++;
     }
-  }
-  return availableMoves;
+    return availableMoves;
 }
 
 // ***************************
 
 export function calcHeuristic(map: string) {
-  const tubes = parseMap(map);
+    const tubes = parseMap(map);
 
-  let score = 0;
-  for (let i = 0; i < tubes.length; i++) {
-    const tube = tubes[i];
-    const colorCount = uniqueCharacters(tube).replace(/_/g, "").length;
-    const waterCount = tube.replace(/_/g, "").length;
-    // console.log({ tube, colorCount, waterCount });
-    if (isTubeEmpty(tube) || colorCount == 1) {
-      continue;
+    let score = 0;
+    for (let i = 0; i < tubes.length; i++) {
+        const tube = tubes[i];
+        const colorCount = uniqueCharacters(tube).replace(/_/g, "").length;
+        const waterCount = tube.replace(/_/g, "").length;
+        // console.log({ tube, colorCount, waterCount });
+        if (isTubeEmpty(tube) || colorCount == 1) {
+            continue;
+        }
+
+        score += colorCount * waterCount;
     }
-
-    score += colorCount * waterCount;
-  }
-  // console.log({ score });
-  return score;
+    // console.log({ score });
+    return score;
 }
 
 export function dfs(node: INode, maxDepth = MAX_DEPTH) {
-  const visited = new Set();
-  const successfulPaths: string[][] = [];
+    const visited = new Set();
+    const successfulPaths: string[][] = [];
 
-  const recurse = (node: INode, maxDepth: number) => {
-    if (maxDepth < 1) return;
+    const recurse = (node: INode, maxDepth: number) => {
+        if (maxDepth < 1) return;
 
-    if (visited.has(node.map)) return;
-    visited.add(node.map);
+        if (visited.has(node.map)) return;
+        visited.add(node.map);
 
-    if (isGameSuccessful(node.map)) {
-      console.log("SUCCESS!", maxDepth, node);
-      successfulPaths.push(node.path);
-      return;
-    }
+        if (isGameSuccessful(node.map)) {
+            console.log("SUCCESS!", maxDepth, node);
+            successfulPaths.push(node.path);
+            return;
+        }
 
-    const moves = checkAvailableMoves(node.map);
-    if (moves.length == 0) return;
+        const moves = checkAvailableMoves(node.map);
+        if (moves.length == 0) return;
 
-    for (let i = 0; i < moves.length; i++) {
-      const move = moves[i];
-      const resultMap = getMapAfterMove(node.map, move);
+        for (let i = 0; i < moves.length; i++) {
+            const move = moves[i];
+            const resultMap = getMapAfterMove(node.map, move);
 
-      const childNode = {
-        map: resultMap,
-        children: [],
-        path: node.path.concat(`${move.from}-${move.to}`),
-        depth: MAX_DEPTH - maxDepth + 1,
-        h: calcHeuristic(resultMap),
-        ...(isGameSuccessful(resultMap) && { success: true }),
-      };
+            const childNode = {
+                map: resultMap,
+                children: [],
+                path: node.path.concat(`${move.from}-${move.to}`),
+                depth: MAX_DEPTH - maxDepth + 1,
+                h: calcHeuristic(resultMap),
+                ...(isGameSuccessful(resultMap) && { success: true }),
+            };
 
-      node.children.push(childNode);
-    }
+            node.children.push(childNode);
+        }
 
-    for (const childNode of node.children) {
-      recurse(childNode, maxDepth - 1);
-    }
-    return { node, successfulPaths };
-  };
+        for (const childNode of node.children) {
+            recurse(childNode, maxDepth - 1);
+        }
+        return { node, successfulPaths };
+    };
 
-  return recurse(node, maxDepth);
+    return recurse(node, maxDepth);
 }
 
 export function bfs(
-  node: { map: string; path: string[]; depth: number; h: number; success?: boolean },
-  maxDepth = MAX_DEPTH
+    node: { map: string; path: string[]; depth: number; h: number; success?: boolean },
+    maxDepth = MAX_DEPTH
 ) {
-  const visited = new Set();
-  const queue = [node];
+    const visited = new Set();
+    const queue = [node];
 
-  while (queue.length > 0) {
-    const curr = queue.shift();
+    while (queue.length > 0) {
+        const curr = queue.shift();
 
-    if (maxDepth < 1 || !curr) break;
-    if (visited.has(curr.map)) continue;
+        if (maxDepth < 1 || !curr) break;
+        if (visited.has(curr.map)) continue;
 
-    visited.add(curr.map);
-    const moves = checkAvailableMoves(curr.map);
+        visited.add(curr.map);
+        const moves = checkAvailableMoves(curr.map);
 
-    const childNodes: { map: string; path: string[]; depth: number; h: number; success?: boolean }[] = [];
+        const childNodes: {
+            map: string;
+            path: string[];
+            depth: number;
+            h: number;
+            success?: boolean;
+        }[] = [];
 
-    for (let i = 0; i < moves.length; i++) {
-      const move = moves[i];
-      const resultMap = getMapAfterMove(curr.map, move);
-      const success = isGameSuccessful(resultMap);
-      const path = curr.path.concat(`${move.from}-${move.to}`);
+        for (let i = 0; i < moves.length; i++) {
+            const move = moves[i];
+            const resultMap = getMapAfterMove(curr.map, move);
+            const success = isGameSuccessful(resultMap);
+            const path = curr.path.concat(`${move.from}-${move.to}`);
 
-      const childNode = {
-        map: resultMap,
-        path,
-        depth: path.length,
-        h: calcHeuristic(resultMap),
-        ...(success && { success: true }),
-      };
-      // console.log(childNode);
+            const childNode = {
+                map: resultMap,
+                path,
+                depth: path.length,
+                h: calcHeuristic(resultMap),
+                ...(success && { success: true }),
+            };
+            // console.log(childNode);
 
-      if (success) {
-        return childNode;
-      }
-      childNodes.push(childNode);
+            if (success) {
+                return childNode;
+            }
+            childNodes.push(childNode);
+        }
+
+        childNodes.sort((a, b) => calcHeuristic(a.map) - calcHeuristic(b.map));
+        // childNodes.sort((a, b) => getHeuristic(b.map) - getHeuristic(a.map));
+        console.log(childNodes);
+
+        for (let i = 0; i < childNodes.length; i++) {
+            queue.push(childNodes[i]);
+        }
     }
-
-    childNodes.sort((a, b) => calcHeuristic(a.map) - calcHeuristic(b.map));
-    // childNodes.sort((a, b) => getHeuristic(b.map) - getHeuristic(a.map));
-    console.log(childNodes);
-
-    for (let i = 0; i < childNodes.length; i++) {
-      queue.push(childNodes[i]);
-    }
-  }
-  return null;
+    return null;
 }
 
 type N = {
-  map: string;
-  move: GameMove | null;
-  parent: N | null;
-  children: N[];
-  path: string[];
-  depth: number;
-  score: number;
+    map: string;
+    move: GameMove | null;
+    parent: N | null;
+    children: N[];
+    path: string[];
+    depth: number;
+    score: number;
 };
 
 export function getDistToGround(targetTube: string) {
-  let topColor = "";
+    let topColor = "";
 
-  for (let i = 3; i >= 0; i--) {
-    const c = targetTube[i];
-    if (!topColor && c != "_") {
-      topColor = c;
-    }
+    for (let i = 3; i >= 0; i--) {
+        const c = targetTube[i];
+        if (!topColor && c != "_") {
+            topColor = c;
+        }
 
-    if (topColor && c != topColor) {
-      return i + 1;
+        if (topColor && c != topColor) {
+            return i + 1;
+        }
     }
-  }
-  return 0;
+    return 0;
 }
 
 const penalty = {
-  uselessMove: -30,
+    uselessMove: -30,
 };
 const bonus: Record<string, Record<number | string, number>> = {
-  spillCount: {
-    0: 0,
-    1: 3.5,
-    2: 7,
-    3: 10.5,
-    4: -10,
-  },
-  distToGround: {
-    0: 6,
-    1: 4,
-    2: 2,
-    3: 1,
-  },
-  tube: {},
+    spillCount: {
+        0: 0,
+        1: 3.5,
+        2: 7,
+        3: 10.5,
+        4: -10,
+    },
+    distToGround: {
+        0: 6,
+        1: 4,
+        2: 2,
+        3: 1,
+    },
+    tube: {},
 };
 
 export function calcHeuristic2(node: N) {
-  let score = 0;
+    let score = 0;
 
-  if (!node.parent || !node.move) return score;
+    if (!node.parent || !node.move) return score;
 
-  const { from, to } = node.move;
+    const { from, to } = node.move;
 
-  const { [from]: prevTubeA, [to]: prevTubeB } = getTubesByIdx(node.parent.map, [from, to]);
-  const { [from]: afterTubeA, [to]: afterTubeB } = getTubesByIdx(node.map, [from, to]);
+    const { [from]: prevTubeA, [to]: prevTubeB } = getTubesByIdx(node.parent.map, [from, to]);
+    const { [from]: afterTubeA, [to]: afterTubeB } = getTubesByIdx(node.map, [from, to]);
 
-  const spillCount = getSpillCount(prevTubeA, prevTubeB);
-  const distToGround = getDistToGround(afterTubeB);
-  console.log({ prevTubeA, prevTubeB, distToGround, spillCount, map: node.map, prevMap: node.parent.map });
+    const spillCount = getSpillCount(prevTubeA, prevTubeB);
+    const distToGround = getDistToGround(afterTubeB);
+    console.log({
+        prevTubeA,
+        prevTubeB,
+        distToGround,
+        spillCount,
+        map: node.map,
+        prevMap: node.parent.map,
+    });
 
-  if ((distToGround == 0 && spillCount == 4) || spillCount == 0) {
-    score += penalty.uselessMove;
-  } else {
-    score += bonus.distToGround[distToGround];
-    score += bonus.spillCount[spillCount];
-  }
+    if ((distToGround == 0 && spillCount == 4) || spillCount == 0) {
+        score += penalty.uselessMove;
+    } else {
+        score += bonus.distToGround[distToGround];
+        score += bonus.spillCount[spillCount];
+    }
 
-  for (const t of parseMap(node.map)) {
-    if (isTubeFull(t) || isTubeEmpty(t)) score += 2.25;
-  }
+    for (const t of parseMap(node.map)) {
+        if (isTubeFull(t) || isTubeEmpty(t)) score += 2.25;
+    }
 
-  return score;
+    return score;
 }
 
 export function getBestNextMoveV1(map: string) {
-  const root: N = { map, parent: null, children: [], depth: 0, path: [], score: 0, move: null };
-  let kill = false;
+    const root: N = { map, parent: null, children: [], depth: 0, path: [], score: 0, move: null };
+    let kill = false;
 
-  const search = (node: N) => {
-    if (kill) return node;
+    const search = (node: N) => {
+        if (kill) return node;
 
-    if (node.depth > MAX_DEPTH) {
-      //   console.log("maxDepth", node.path);
-      return node;
-    }
-    if (isGameSuccessful(node.map)) {
-      console.log("Success", node.path);
-      kill = true;
-      return node;
-    }
-    if (isCycling(node.path)) {
-      //   console.log("isCycling", node.path, node);
-      return node;
-    }
-    const moves = checkAvailableMoves(node.map);
-    if (moves.length === 0) {
-      console.log("NO SOLUTION");
-      return node;
-    }
-    const nodeChildren: N[] = [];
-    for (const move of moves) {
-      const parent = node;
-      const path = parent.path.concat(`${move.from}-${move.to}`);
-      const resultMap = getMapAfterMove(parent.map, move);
-      const newNode = {
-        parent,
-        path,
-        move,
-        children: [],
-        depth: parent.depth + 1,
-        map: resultMap,
-        score: 0,
-      };
+        if (node.depth > MAX_DEPTH) {
+            //   console.log("maxDepth", node.path);
+            return node;
+        }
+        if (isGameSuccessful(node.map)) {
+            console.log("Success", node.path);
+            kill = true;
+            return node;
+        }
+        if (isCycling(node.path)) {
+            //   console.log("isCycling", node.path, node);
+            return node;
+        }
+        const moves = checkAvailableMoves(node.map);
+        if (moves.length === 0) {
+            console.log("NO SOLUTION");
+            return node;
+        }
+        const nodeChildren: N[] = [];
+        for (const move of moves) {
+            const parent = node;
+            const path = parent.path.concat(`${move.from}-${move.to}`);
+            const resultMap = getMapAfterMove(parent.map, move);
+            const newNode = {
+                parent,
+                path,
+                move,
+                children: [],
+                depth: parent.depth + 1,
+                map: resultMap,
+                score: 0,
+            };
 
-      newNode.score = calcHeuristic2(newNode);
-      nodeChildren.push(newNode);
-    }
-    nodeChildren.sort((a, b) => a.score - b.score);
-    for (const child of nodeChildren) {
-      node.children.push(child);
-    }
-    for (const ch of node.children) {
-      search(ch);
-    }
-    return node;
-  };
-  return search(root);
+            newNode.score = calcHeuristic2(newNode);
+            nodeChildren.push(newNode);
+        }
+        nodeChildren.sort((a, b) => a.score - b.score);
+        for (const child of nodeChildren) {
+            node.children.push(child);
+        }
+        for (const ch of node.children) {
+            search(ch);
+        }
+        return node;
+    };
+    return search(root);
 }
 
 export function getBestNextMoveV2(map: string) {
-  const root: N = { map, parent: null, children: [], depth: 0, path: [], score: 0, move: null };
+    const root: N = { map, parent: null, children: [], depth: 0, path: [], score: 0, move: null };
 
-  const queue: N[] = [root];
-  let node: N;
-  let found = false;
+    const queue: N[] = [root];
+    let node: N;
+    let found = false;
 
-  while (queue.length && !found) {
-    queue.sort((a, b) => b.score - a.score);
-    node = queue.shift() as N;
+    while (queue.length && !found) {
+        queue.sort((a, b) => b.score - a.score);
+        node = queue.shift() as N;
 
-    if (node.depth > MAX_DEPTH) {
-      console.log("maxDepth", node.path);
-      return node;
+        if (node.depth > MAX_DEPTH) {
+            console.log("maxDepth", node.path);
+            return node;
+        }
+        if (isGameSuccessful(node.map)) {
+            console.log("Success", node.path);
+            found = true;
+            return node;
+        }
+
+        if (isCycling(node.path)) {
+            //   console.log("isCycling", node.path, node);
+            return node;
+        }
+
+        const moves = checkAvailableMoves(node.map);
+        if (moves.length === 0) {
+            // console.log("NO SOLUTION");
+            return node;
+        }
+
+        for (const move of moves) {
+            const parent = node;
+            const path = parent.path.concat(`${move.from}-${move.to}`);
+            const resultMap = getMapAfterMove(parent.map, move);
+            const newNode = {
+                parent,
+                path,
+                move,
+                children: [],
+                depth: parent.depth + 1,
+                map: resultMap,
+                score: 0,
+            };
+
+            newNode.score = calcHeuristic2(newNode);
+            if (newNode.score > 0) queue.push(newNode);
+        }
     }
-    if (isGameSuccessful(node.map)) {
-      console.log("Success", node.path);
-      found = true;
-      return node;
-    }
 
-    if (isCycling(node.path)) {
-      //   console.log("isCycling", node.path, node);
-      return node;
-    }
+    return null;
 
-    const moves = checkAvailableMoves(node.map);
-    if (moves.length === 0) {
-      // console.log("NO SOLUTION");
-      return node;
-    }
+    // ***************************************************************
 
-    for (const move of moves) {
-      const parent = node;
-      const path = parent.path.concat(`${move.from}-${move.to}`);
-      const resultMap = getMapAfterMove(parent.map, move);
-      const newNode = {
-        parent,
-        path,
-        move,
-        children: [],
-        depth: parent.depth + 1,
-        map: resultMap,
-        score: 0,
-      };
+    // const search = (node: N) => {
+    //   if (kill) return node;
 
-      newNode.score = calcHeuristic2(newNode);
-      if (newNode.score > 0) queue.push(newNode);
-    }
-  }
+    //   if (node.depth > MAX_DEPTH) {
+    //     //   console.log("maxDepth", node.path);
+    //     return node;
+    //   }
+    //   if (isGameSuccessful(node.map)) {
+    //     console.log("Success", node.path);
+    //     kill = true;
+    //     return node;
+    //   }
+    //   if (isCycling(node.path)) {
+    //     //   console.log("isCycling", node.path, node);
+    //     return node;
+    //   }
+    //   const moves = checkAvailableMoves(node.map);
+    //   if (moves.length === 0) {
+    //     console.log("NO SOLUTION");
+    //     return node;
+    //   }
+    //   const nodeChildren: N[] = [];
+    //   for (const move of moves) {
+    //     const parent = node;
+    //     const path = parent.path.concat(`${move.from}-${move.to}`);
+    //     const resultMap = getMapAfterMove(parent.map, move);
+    //     const newNode = {
+    //       parent,
+    //       path,
+    //       move,
+    //       children: [],
+    //       depth: parent.depth + 1,
+    //       map: resultMap,
+    //       score: 0,
+    //     };
 
-  return null;
-
-  // ***************************************************************
-
-  // const search = (node: N) => {
-  //   if (kill) return node;
-
-  //   if (node.depth > MAX_DEPTH) {
-  //     //   console.log("maxDepth", node.path);
-  //     return node;
-  //   }
-  //   if (isGameSuccessful(node.map)) {
-  //     console.log("Success", node.path);
-  //     kill = true;
-  //     return node;
-  //   }
-  //   if (isCycling(node.path)) {
-  //     //   console.log("isCycling", node.path, node);
-  //     return node;
-  //   }
-  //   const moves = checkAvailableMoves(node.map);
-  //   if (moves.length === 0) {
-  //     console.log("NO SOLUTION");
-  //     return node;
-  //   }
-  //   const nodeChildren: N[] = [];
-  //   for (const move of moves) {
-  //     const parent = node;
-  //     const path = parent.path.concat(`${move.from}-${move.to}`);
-  //     const resultMap = getMapAfterMove(parent.map, move);
-  //     const newNode = {
-  //       parent,
-  //       path,
-  //       move,
-  //       children: [],
-  //       depth: parent.depth + 1,
-  //       map: resultMap,
-  //       score: 0,
-  //     };
-
-  //     newNode.score = calcHeuristic2(newNode);
-  //     nodeChildren.push(newNode);
-  //   }
-  //   nodeChildren.sort((a, b) => a.score - b.score);
-  //   for (const child of nodeChildren) {
-  //     node.children.push(child);
-  //   }
-  //   for (const ch of node.children) {
-  //     search(ch);
-  //   }
-  //   return node;
-  // };
-  // return search(root);
+    //     newNode.score = calcHeuristic2(newNode);
+    //     nodeChildren.push(newNode);
+    //   }
+    //   nodeChildren.sort((a, b) => a.score - b.score);
+    //   for (const child of nodeChildren) {
+    //     node.children.push(child);
+    //   }
+    //   for (const ch of node.children) {
+    //     search(ch);
+    //   }
+    //   return node;
+    // };
+    // return search(root);
 }
 
 type NN = { map: string; path: GameMove[]; depth: number; parent: NN | null; score: number };
 
 export function calcHeuristic3(node: NN) {
-  let score = 0;
+    let score = 0;
 
-  if (!node.parent || !node.path) return score;
+    if (!node.parent || !node.path) return score;
 
-  const { from, to } = node.path.at(-1)!;
+    const { from, to } = node.path.at(-1)!;
 
-  const { [from]: prevTubeA, [to]: prevTubeB } = getTubesByIdx(node.parent.map, [from, to]);
-  const { [from]: afterTubeA, [to]: afterTubeB } = getTubesByIdx(node.map, [from, to]);
+    const { [from]: prevTubeA, [to]: prevTubeB } = getTubesByIdx(node.parent.map, [from, to]);
+    const { [from]: afterTubeA, [to]: afterTubeB } = getTubesByIdx(node.map, [from, to]);
 
-  const spillCount = getSpillCount(prevTubeA, prevTubeB);
-  const distToGround = getDistToGround(afterTubeB);
-  //   console.log({ prevTubeA, prevTubeB, distToGround, spillCount, map: node.map, prevMap: node.parent.map });
+    const spillCount = getSpillCount(prevTubeA, prevTubeB);
+    const distToGround = getDistToGround(afterTubeB);
+    //   console.log({ prevTubeA, prevTubeB, distToGround, spillCount, map: node.map, prevMap: node.parent.map });
 
-  if ((distToGround == 0 && spillCount == 4) || spillCount == 0) {
-    score += penalty.uselessMove;
-  } else if (areMapsEqual(node.map, node.parent.map)) {
-    score += penalty.uselessMove * 2;
-  } else {
-    score += bonus.distToGround[distToGround];
-    score += bonus.spillCount[spillCount];
+    if ((distToGround == 0 && spillCount == 4) || spillCount == 0) {
+        score += penalty.uselessMove;
+    } else if (areMapsEqual(node.map, node.parent.map)) {
+        score += penalty.uselessMove * 2;
+    } else {
+        score += bonus.distToGround[distToGround];
+        score += bonus.spillCount[spillCount];
 
-    for (const t of parseMap(node.map)) {
-      if (isTubeFull(t) || isTubeEmpty(t)) score += 2.25;
-      else if (uniqueCharacters(t).length === 2) score += 1;
+        for (const t of parseMap(node.map)) {
+            if (isTubeFull(t) || isTubeEmpty(t)) score += 2.25;
+            else if (uniqueCharacters(t).length === 2) score += 1;
+        }
     }
-  }
 
-  return score;
+    return score;
+}
+
+export function calcHeuristic4(node: NN) {
+    let score = 0;
+
+    if (!node.parent || !node.path) return score;
+
+    const { from, to } = node.path.at(-1)!;
+
+    const { [from]: prevTubeA, [to]: prevTubeB } = getTubesByIdx(node.parent.map, [from, to]);
+    const { [from]: afterTubeA, [to]: afterTubeB } = getTubesByIdx(node.map, [from, to]);
+
+    const spillCount = getSpillCount(prevTubeA, prevTubeB);
+    const distToGround = getDistToGround(afterTubeB);
+    //   console.log({ prevTubeA, prevTubeB, distToGround, spillCount, map: node.map, prevMap: node.parent.map });
+
+    if ((distToGround == 0 && spillCount == 4) || spillCount == 0) {
+        score += penalty.uselessMove;
+    } else if (areMapsEqual(node.map, node.parent.map)) {
+        score += penalty.uselessMove * 2;
+    } else {
+        score += bonus.distToGround[distToGround];
+        // score += bonus.spillCount[spillCount];
+
+        for (const t of parseMap(node.map)) {
+            if (isTubeFull(t) || isTubeEmpty(t)) score += 2.25;
+            else if (uniqueCharacters(t).length === 2) score += 1;
+        }
+    }
+
+    return score;
 }
 
 export function getBestNextMove(map: string) {
-  const visited: Record<string, number> = {};
-  const queue: NN[] = [{ map, depth: 0, parent: null, score: 0, path: [] }];
+    const visited: Record<string, number> = {};
+    const queue: NN[] = [{ map, depth: 0, parent: null, score: 0, path: [] }];
 
-  while (queue.length) {
-    const curr = queue.shift()!;
+    while (queue.length) {
+        const curr = queue.shift()!;
 
-    // base case
-    if (isGameSuccessful(curr.map)) {
-      //   console.log("success", curr, "best move: ", curr.path[0]);
-      return curr.path[0];
+        // base case
+        if (isGameSuccessful(curr.map)) {
+            //   console.log("success", curr, "best move: ", curr.path[0]);
+            return curr.path[0];
+        }
+
+        // base case
+        if (curr.depth > MAX_DEPTH) {
+            //   console.log("MAX_DEPTH reached", curr, "best move: ", curr.path[0]);
+            return curr.path[0];
+        }
+
+        // skip if visited
+        if (visited[curr.map]) {
+            visited[curr.map]++;
+            continue;
+        } else {
+            visited[curr.map] = 1;
+        }
+
+        const moves = checkAvailableMoves(curr.map);
+        // skip if no available moves
+        if (moves.length <= 0) {
+            continue;
+        }
+
+        const resultMaps: NN[] = [];
+        for (const m of moves) {
+            const child = {
+                map: getMapAfterMove(curr.map, m),
+                depth: curr.depth + 1,
+                parent: curr,
+                score: 0,
+                path: curr.path.concat(m),
+            };
+            // assign score
+            // child.score = calcHeuristic3(child);
+            child.score = calcHeuristic4(child);
+            resultMaps.push(child);
+        }
+
+        // const sortedResults = resultMaps.slice().sort((a, b) => b.score - a.score);
+        // for (const res of sortedResults) {}
+        for (const res of resultMaps) {
+            if (res.score > 0) queue.push(res);
+        }
+        queue.sort((a, b) => b.score - a.score);
+        console.log({ curr, resultMaps, queue });
     }
 
-    // base case
-    if (curr.depth > MAX_DEPTH) {
-      //   console.log("MAX_DEPTH reached", curr, "best move: ", curr.path[0]);
-      return curr.path[0];
-    }
-
-    // skip if visited
-    if (visited[curr.map]) {
-      visited[curr.map]++;
-      continue;
-    } else {
-      visited[curr.map] = 1;
-    }
-
-    const moves = checkAvailableMoves(curr.map);
-    // skip if no available moves
-    if (moves.length <= 0) {
-      continue;
-    }
-
-    const resultMaps: NN[] = [];
-    for (const m of moves) {
-      const child = {
-        map: getMapAfterMove(curr.map, m),
-        depth: curr.depth + 1,
-        parent: curr,
-        score: 0,
-        path: curr.path.concat(m),
-      };
-      // assign score
-      child.score = calcHeuristic3(child);
-      resultMaps.push(child);
-    }
-
-    // const sortedResults = resultMaps.slice().sort((a, b) => b.score - a.score);
-    // for (const res of sortedResults) {}
-    for (const res of resultMaps) {
-      if (res.score > 0) queue.push(res);
-    }
-    queue.sort((a, b) => b.score - a.score);
-    console.log({ curr, resultMaps, queue });
-  }
-
-  console.log("NO SOLUTION");
-  return null;
+    console.log("NO SOLUTION");
+    return null;
 }
 
 // import type { INode, GameMove } from "../utils/tube-helpers.ts";
@@ -851,8 +896,10 @@ const map10 = "ewwe gtrr urgu brtu gbgz zubt ztbz ewew ____ ____"; // 10 tubes
 const map11 = "ejew gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp ____ ____";
 const map12 = "ejew gtrr urgu brtu gbgz zubt ztbz ewew ppjw jpjp yhhh hyyy ____ ____";
 const map13 = "ejew gtra urgu brtx gbgz zubt zthz ywew ppjw xara axux jpjp yhbh hyye ____ ____";
-const map14 = "ejew gtra urgu brtx gbgz zubt zthz ykew fpjw xara axux jpjp yhbh hkye kyfp ffwk ____ ____"; // 18 tubes
-const map15 = "ejew gtra urgu brtx gbgz zubt zthz ykew fpjw xira amux jpjp yhbh hkye kyfp mfwk iixm mfai ____ ____"; // 20 tubes
+const map14 =
+    "ejew gtra urgu brtx gbgz zubt zthz ykew fpjw xara axux jpjp yhbh hkye kyfp ffwk ____ ____"; // 18 tubes
+const map15 =
+    "ejew gtra urgu brtx gbgz zubt zthz ykew fpjw xira amux jpjp yhbh hkye kyfp mfwk iixm mfai ____ ____"; // 20 tubes
 
 // function runAutoGame() {
 //   let myMap = map15;
