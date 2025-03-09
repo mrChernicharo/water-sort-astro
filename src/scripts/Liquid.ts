@@ -37,7 +37,7 @@ export class Liquid {
 
             const layer = document.createElement("div");
             layer.classList.add("layer");
-            layer.classList.add(cssColor);
+            // layer.classList.add(cssColor);
 
             layer.style.backgroundColor = cssColor;
 
