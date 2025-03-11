@@ -1,6 +1,6 @@
 import { GameState } from "./constants";
 import { parseMap, wait } from "./helpers";
-import { getBestNextMove, getMapAfterMove, getSpillCount, isMapValid } from "./old/old";
+import { getBestNextMove, getMapAfterMove, isMapValid } from "./old/old";
 import { Tube } from "./Tube";
 
 export class Level {

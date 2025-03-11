@@ -1,18 +1,15 @@
 import gsap from "gsap";
+import { Liquid } from "./Liquid";
 import {
-    duration,
-    COLORS,
     HEIGHTS_DATA,
     ROTATION_DATA,
-    TUBE_WIDTH,
-    TUBE_HEIGHT,
-    type Color,
     RotationDir,
+    TUBE_HEIGHT,
+    TUBE_WIDTH,
+    duration,
 } from "./constants";
-import { parseMap, wait } from "./helpers";
+import { wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
-import { cloneDeep } from "lodash";
-import { Liquid } from "./Liquid";
 
 export class Tube {
     idx: number;
