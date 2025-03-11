@@ -5,8 +5,9 @@ import {
     HEIGHTS_DATA,
     ROTATION_DATA,
     TUBE_WIDTH,
-    type Color,
     TUBE_HEIGHT,
+    type Color,
+    RotationDir,
 } from "./constants";
 import { parseMap, wait } from "./helpers";
 import { getSpillCount, performWaterSpill } from "./old/old";
@@ -37,7 +38,9 @@ export class Tube {
     #createElement() {
         const tubeEle = document.createElement("div");
         tubeEle.classList.add("tube");
-        tubeEle.classList.add(`tube-${this.idx}`);
+        tubeEle.style.width = TUBE_WIDTH + "px";
+        tubeEle.style.height = TUBE_HEIGHT + "px";
+        // tubeEle.classList.add(`tube-${this.idx}`);
 
         tubeEle.dataset.idx = String(this.idx);
 
@@ -141,6 +144,7 @@ export class Tube {
     }
 
     async pourInto(other: Tube) {
+        this.element.style.pointerEvents = "none";
         const spillCount = getSpillCount(this.colorStr, other.colorStr);
 
         const result = performWaterSpill(this.colorStr, other.colorStr);
@@ -150,6 +154,7 @@ export class Tube {
             this.spill(other, tubeA, spillCount),
             other.fill(this, tubeB, spillCount),
         ]);
+        this.element.style.pointerEvents = "all";
     }
 
     async spill(other: Tube, resultColorStr: string, spillCount: number) {
@@ -158,26 +163,34 @@ export class Tube {
         const { remainingLiquids } = this.parsePouringLiquids(spillCount);
 
         // move towards other
-        const { x: ox, y: oy } = other.getAnchor()!.getBoundingClientRect();
-        const { x: tx, y: ty } = this.getAnchor()!.getBoundingClientRect();
+        const { x: otherX, y: otherY } = other.getAnchor()!.getBoundingClientRect();
+        const { x: thisX, y: thisY } = this.getAnchor()!.getBoundingClientRect();
         // should i rotate left or right?
-        const direction = ox + TUBE_WIDTH / 2 > window.innerWidth / 2 ? "clockwise" : "anticlock";
+        const direction =
+            otherX + TUBE_WIDTH / 2 > window.innerWidth / 2
+                ? RotationDir.clockwise
+                : RotationDir.anticlock;
 
-        this.element.style.transformOrigin = direction == "clockwise" ? "top right" : "top left";
+        const rotationSide = direction == RotationDir.clockwise ? "right" : "left";
 
-        const dx = ox - tx;
-        const dy = oy - ty - 60;
+        this.element.style.transformOrigin = `top ${rotationSide}`; // "top right" : "top left"
+
+        // move this tube above other tube
+        const hightAboveTarget = 60;
+        const dx = otherX - thisX;
+        const dy = otherY - thisY - hightAboveTarget;
         gsap.to(this.element, {
-            x: dx + (direction == "clockwise" ? -TUBE_WIDTH / 2 : TUBE_WIDTH / 2),
+            x: dx + (direction == RotationDir.clockwise ? -TUBE_WIDTH / 2 : TUBE_WIDTH / 2),
             y: dy,
         });
 
         const topLiquid = this.getTopLiquid();
         if (!topLiquid) {
-            console.log("oops");
+            console.log("oopsy! no top liquid");
             return;
         }
 
+        // enlarge liquids heights as tube rotates
         let topLiquidIdx = topLiquid.idx;
         for (const lq of this.liquids) {
             if (topLiquidIdx < 3) {
@@ -185,9 +198,14 @@ export class Tube {
                 lq.setLevel(liquidHeight);
             }
         }
-        // rotate to angle so tube is ready to start spilling // duration * 1
+
+        // @TODO: drawLiquidFall();
+        const topMarker = topLiquid.getMarkers().filter((el) => el.dataset.side === rotationSide);
+        console.log(topMarker);
+
+        // rotate tube so it's ready to start spilling // duration * 1
         const readyAngle = ROTATION_DATA.ready[topLiquidIdx];
-        await this.rotateTo(direction == "clockwise" ? readyAngle : -readyAngle);
+        await this.rotateTo(direction == RotationDir.clockwise ? readyAngle : -readyAngle);
 
         // rotate towards angle where liquid is fully spilled
         const removingLiquids: Liquid[] = [];
@@ -199,32 +217,28 @@ export class Tube {
                 lq.setLevel(liquidHeight);
             }
 
-            await this.rotateTo(direction == "clockwise" ? doneAngle : -doneAngle);
+            await this.rotateTo(direction == RotationDir.clockwise ? doneAngle : -doneAngle);
 
             topLiquidIdx--;
             spillCount--;
             doneAngle = ROTATION_DATA.done[topLiquidIdx];
         }
 
-        // rotate back
+        // remove spilled liquids
         removingLiquids.forEach((lq) => {
             lq.element.remove();
         });
         this.liquids = remainingLiquids.sort((a, b) => a.idx - b.idx);
 
+        // shrink remaining liquids to rest state as tube is rotated back
         for (const lq of this.liquids) {
             lq.setLevel(25);
         }
+        // move tube back to its position
         gsap.to(this.element, { x: 0, y: 0 });
-        await this.rotateTo(0);
 
-        // console.log("spill", {
-        //     resultColorStr,
-        //     spillCount,
-        //     tube: this,
-        //     pouringLiquids,
-        //     remainingLiquids,
-        // });
+        // rotate tube back to rest
+        await this.rotateTo(0);
     }
     async fill(other: Tube, resultColorStr: string, spillCount: number) {
         this.colorStr = resultColorStr;
@@ -250,4 +264,19 @@ export class Tube {
 
         // console.log("fill", { resultColorStr, spillCount, tube: this });
     }
+
+    // drawLiquidFall(direction: RotationDir) {
+    //     console.log("drawLiquidFall :::", {
+    //         ele: this.element,
+    //         parentEle: this.element.parentElement,
+    //         direction,
+    //     });
+    //     const liquidTrail = document.createElement("div");
+    //     liquidTrail.classList.add("liquid-trail");
+    //     this.element.insertAdjacentElement("afterend", liquidTrail);
+
+    //     const tubeRect = this.element.getBoundingClientRect();
+    //     const { x, y } = tubeRect;
+    //     console.log({ x, y });
+    // }
 }
