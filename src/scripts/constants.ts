@@ -25,50 +25,24 @@ export const COLORS = {
     // x: "indianRed",
     // y: "yellow",
     // z: "pink",
-    // a: "hsl(0, 100%, 50%)",
-    // b: "hsl(14, 100%, 50%)",
-    // c: "hsl(28, 100%, 50%)",
-    // d: "hsl(42, 100%, 50%)",
-    // e: "hsl(56, 100%, 50%)",
-    // f: "hsl(70, 100%, 50%)",
-    // g: "hsl(84, 100%, 50%)",
-    // h: "hsl(98, 100%, 50%)",
-    // i: "hsl(112, 100%, 50%)",
-    // j: "hsl(126, 100%, 50%)",
-    // k: "hsl(140, 100%, 50%)",
-    // l: "hsl(154, 100%, 50%)",
-    // m: "hsl(168, 100%, 50%)",
-    // n: "hsl(182, 100%, 50%)",
-    // o: "hsl(196, 100%, 50%)",
-    // p: "hsl(210, 100%, 50%)",
-    // q: "hsl(224, 100%, 50%)",
-    // r: "hsl(238, 100%, 50%)",
-    // s: "hsl(252, 100%, 50%)",
-    // t: "hsl(266, 100%, 50%)",
-    // u: "hsl(280, 100%, 50%)",
-    // v: "hsl(294, 100%, 50%)",
-    // w: "hsl(308, 100%, 50%)",
-    // x: "hsl(322, 100%, 50%)",
-    // y: "hsl(336, 100%, 50%)",
-    // z: "hsl(350, 100%, 50%)",
     a: "hsl(0, 100%, 50%)",
     b: "hsl(15, 90%, 60%)",
     c: "hsl(30, 80%, 70%)",
     d: "hsl(45, 70%, 80%)",
     e: "hsl(60, 60%, 90%)",
-    f: "hsl(75, 100%, 40%)",
-    g: "hsl(90, 90%, 50%)",
-    h: "hsl(105, 80%, 60%)",
+    f: "hsl(180, 90%, 40%)",
+    g: "hsl(160, 90%, 25%)",
+    h: "hsl(105, 80%, 40%)",
     i: "hsl(120, 70%, 70%)",
-    j: "hsl(135, 60%, 80%)",
-    k: "hsl(150, 50%, 90%)",
+    j: "hsl(75, 100%, 40%)",
+    k: "hsl(150, 35%, 60%)",
     l: "hsl(165, 100%, 30%)",
-    m: "hsl(180, 90%, 40%)",
+    m: "hsl(225, 100%, 50%)",
     n: "hsl(195, 80%, 50%)",
     o: "hsl(210, 70%, 60%)",
     p: "hsl(225, 60%, 70%)",
     q: "hsl(240, 50%, 80%)",
-    r: "hsl(255, 100%, 20%)",
+    r: "hsl(255, 100%, 30%)",
     s: "hsl(270, 90%, 30%)",
     t: "hsl(285, 80%, 40%)",
     u: "hsl(300, 70%, 50%)",
@@ -77,41 +51,24 @@ export const COLORS = {
     x: "hsl(345, 100%, 10%)",
     y: "hsl(360, 90%, 20%)",
     z: "hsl(10, 80%, 30%)",
-
-    // a: "hsl(0, 100%, 50%)",
-    // b: "hsl(10, 100%, 50%)",
-    // c: "hsl(20, 100%, 50%)",
-    // d: "hsl(30, 100%, 50%)",
-    // e: "hsl(40, 100%, 50%)",
-    // f: "hsl(50, 100%, 50%)",
-    // g: "hsl(60, 100%, 50%)",
-    // h: "hsl(70, 100%, 50%)",
-    // i: "hsl(80, 100%, 50%)",
-    // j: "hsl(90, 100%, 50%)",
-    // k: "hsl(100, 100%, 50%)",
-    // l: "hsl(110, 100%, 50%)",
-    // m: "hsl(120, 100%, 50%)",
-    // n: "hsl(130, 100%, 50%)",
-    // o: "hsl(140, 100%, 50%)",
-    // p: "hsl(150, 100%, 50%)",
-    // q: "hsl(160, 100%, 50%)",
-    // r: "hsl(170, 100%, 50%)",
-    // s: "hsl(180, 100%, 50%)",
-    // t: "hsl(190, 100%, 50%)",
-    // u: "hsl(200, 100%, 50%)",
-    // v: "hsl(210, 100%, 50%)",
-    // w: "hsl(220, 100%, 50%)",
-    // x: "hsl(230, 100%, 50%)",
-    // y: "hsl(240, 100%, 50%)",
-    // z: "hsl(250, 100%, 50%)",
 };
 
 export type Color = keyof typeof COLORS;
 
 export type GameMove = { from: number; to: number };
 
+export enum GameState {
+    idle = "idle",
+    pouring = "pouring",
+}
+
+export enum RotationDir {
+    clockwise = "clockwise",
+    anticlock = "anticlock",
+}
+
 export const TUBE_HEIGHT = 200;
-export const TUBE_WIDTH = 50;
+export const TUBE_WIDTH = 56;
 
 export const HEIGHTS_DATA: Record<number, Record<number, number>> = {
     3: {
@@ -155,4 +112,5 @@ export const ROTATION_DATA: Record<"ready" | "done", Record<number, number>> = {
 };
 
 export const duration = 0.5;
-// export const duration = 1;
+// export const duration = 2;
+// export const duration = 10;

@@ -9,8 +9,6 @@ const levelData = json[levelIdx - 1];
 
 <style is:global>
     :root {
-        --tube-width: 50px;
-        --tube-height: 200px;
     }
     * {
         box-sizing: border-box;
@@ -26,8 +24,7 @@ const levelData = json[levelIdx - 1];
 
     .tube {
         position: relative;
-        width: var(--tube-width);
-        height: var(--tube-height);
+        width: tw;
         display: flex;
         flex-direction: column-reverse;
         border: 1px solid;
@@ -77,6 +74,13 @@ const levelData = json[levelIdx - 1];
         height: 500px;
         translate: -200px 0px;
         pointer-events: none;
+    }
+
+    .liquid-trail {
+        position: absolute;
+        width: 200px;
+        height: 5px;
+        background-color: red;
     }
 </style>
 

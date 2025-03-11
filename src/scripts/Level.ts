@@ -1,3 +1,4 @@
+import { GameState } from "./constants";
 import { parseMap, wait } from "./helpers";
 import { getBestNextMove, getMapAfterMove, getSpillCount, isMapValid } from "./old/old";
 import { Tube } from "./Tube";
@@ -8,6 +9,7 @@ export class Level {
     board!: Tube[];
     selectedTubeIdx: number | null;
     element: HTMLDivElement;
+    state = GameState.idle;
 
     constructor(map: string) {
         if (!isMapValid(map)) {
@@ -50,45 +52,53 @@ export class Level {
     }
 
     async pour(tubeA: Tube, tubeB: Tube) {
+        this.state = GameState.pouring;
+
         await tubeA.pourInto(tubeB);
+
         const updatedMap = getMapAfterMove(this.map, { from: tubeA.idx, to: tubeB.idx });
 
-        // @TODO remove setBoard
-        // this.#setBoard(updatedMap);
         this.history.push(updatedMap);
         this.map = updatedMap;
-        console.log(this);
+        this.state = GameState.idle;
     }
 
     goBackInTime() {
+        // console.log("goBackInTime", this);
+
         if (this.history.length <= 1) return;
 
         this.history.pop();
         this.map = this.history.at(-1)!;
 
         this.#setBoard(this.map);
-        console.log(this);
     }
 
-    doBestMove() {
+    async doBestMove() {
+        if (this.state == GameState.pouring) {
+            console.log("wait, my friend!");
+            return;
+        }
+
         const move = getBestNextMove(this.map);
-        console.log("do best move", move);
+        console.log("do best move", move, this.state);
+
         if (!move) {
+            // @TODO: trigger game over
             console.log("no best move 😩");
             return;
         }
+
         const { from, to } = move;
         const tubeA = this.getTubeByIdx(from);
         const tubeB = this.getTubeByIdx(to);
 
-        tubeA.pourInto(tubeB);
+        await this.pour(tubeA, tubeB);
+
         const updatedMap = getMapAfterMove(this.map, { from: tubeA.idx, to: tubeB.idx });
 
-        // @TODO remove setBoard
-        // this.#setBoard(updatedMap);
         this.history.push(updatedMap);
         this.map = updatedMap;
-        console.log(this);
     }
 
     #onWindowClick(e: MouseEvent) {
@@ -100,12 +110,13 @@ export class Level {
 
         // console.log(composedPath, clickedTube, clickedGoBackInTimeBtn, clickedBestMoveBtn);
 
-        if (clickedGoBackInTimeBtn) {
-            this.goBackInTime();
-        }
-
         if (clickedBestMoveBtn) {
             this.doBestMove();
+            return;
+        }
+
+        if (clickedGoBackInTimeBtn) {
+            this.goBackInTime();
         }
 
         if (clickedTube) {
